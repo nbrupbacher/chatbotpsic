@@ -447,19 +447,15 @@ async function processQuery(text) {
   showTyping();
   conversationHistory.push({ role: 'user', content: text });
   try {
-const response = await fetch('/api/chat', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ messages: conversationHistory })
-});
-const data = await response.json();
-removeTyping();
-if (!response.ok) throw new Error(data.error || 'Error API');
-const reply = data.reply;
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: conversationHistory })
+    });
     const data = await response.json();
     removeTyping();
-    if (!response.ok) throw new Error(data.error?.message || 'Error API');
-    const reply = data.content[0].text;
+    if (!response.ok) throw new Error(data.error || 'Error API');
+    const reply = data.reply;
     conversationHistory.push({ role: 'assistant', content: reply });
     appendMessage('bot', reply, []);
   } catch(err) {
