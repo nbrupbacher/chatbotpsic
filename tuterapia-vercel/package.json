@@ -1,0 +1,9 @@
+{
+  "name": "tuterapia-asistente",
+  "version": "1.0.0",
+  "description": "Asistente para Psicologos - Comunidad Tu Terapia",
+  "main": "api/chat.js",
+  "engines": {
+    "node": ">=18.x"
+  }
+}
