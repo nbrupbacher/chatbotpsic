@@ -87,6 +87,31 @@
   .send-btn:hover { background:var(--verde-oscuro); }
   .send-btn:disabled { background:#c5d9ca; cursor:default; }
 
+  /* Attach button */
+  .attach-btn { width:44px; height:44px; border-radius:12px; background:transparent; border:1.5px solid #e2ded8; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; flex-shrink:0; color:var(--gris); }
+  .attach-btn:hover { border-color:var(--verde-principal); color:var(--verde-principal); background:rgba(117,183,129,0.06); }
+  .attach-btn.has-image { border-color:var(--verde-principal); color:var(--verde-principal); background:rgba(117,183,129,0.12); }
+
+  /* Preview de imagen adjunta */
+  .image-preview-row { max-width:720px; margin:0 auto 10px; display:none; align-items:center; gap:10px; padding:8px 10px; background:var(--crema); border:1.5px solid rgba(117,183,129,0.3); border-radius:12px; animation:fadeUp 0.2s ease; }
+  .image-preview-row.visible { display:flex; }
+  .image-preview-thumb { width:48px; height:48px; border-radius:8px; object-fit:cover; flex-shrink:0; }
+  .image-preview-info { flex:1; min-width:0; font-size:13px; color:var(--verde-oscuro); }
+  .image-preview-name { font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .image-preview-size { color:var(--gris); font-size:12px; margin-top:2px; }
+  .image-preview-remove { width:28px; height:28px; border-radius:50%; background:transparent; border:none; cursor:pointer; color:var(--gris); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s; }
+  .image-preview-remove:hover { background:rgba(224,82,82,0.12); color:#e05252; }
+
+  /* Imagen dentro de burbuja de chat */
+  .msg-image { max-width:240px; max-height:240px; border-radius:12px; display:block; margin-bottom:6px; cursor:pointer; transition:opacity 0.2s; }
+  .msg-image:hover { opacity:0.9; }
+  .msg-image:last-child { margin-bottom:0; }
+
+  /* Modal para ver imagen completa */
+  .image-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:100; align-items:center; justify-content:center; padding:20px; cursor:zoom-out; animation:fadeUp 0.2s ease; }
+  .image-modal.visible { display:flex; }
+  .image-modal img { max-width:100%; max-height:100%; border-radius:12px; }
+
   /* Welcome */
   .welcome-msg { text-align:center; padding:32px 16px 8px; max-width:480px; margin:0 auto; animation:fadeUp 0.5s ease; }
   .welcome-title { font-family:'Candal',sans-serif; font-size:22px; color:var(--azul-oscuro); margin-bottom:8px; }
@@ -144,7 +169,25 @@
   </div>
 
   <div class="chat-input-area">
+    <!-- Preview de imagen adjunta -->
+    <div class="image-preview-row" id="image-preview-row">
+      <img class="image-preview-thumb" id="image-preview-thumb" alt="">
+      <div class="image-preview-info">
+        <div class="image-preview-name" id="image-preview-name"></div>
+        <div class="image-preview-size" id="image-preview-size"></div>
+      </div>
+      <button class="image-preview-remove" onclick="removeAttachedImage()" title="Quitar imagen" aria-label="Quitar imagen">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
     <div class="chat-input-inner">
+      <!-- Input file oculto -->
+      <input type="file" id="image-input" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
+      <!-- Botón adjuntar -->
+      <button class="attach-btn" id="attach-btn" onclick="document.getElementById('image-input').click()" title="Adjuntar imagen" aria-label="Adjuntar imagen">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+      </button>
       <textarea id="chat-input" class="chat-textarea" placeholder="Escribí tu consulta acá..." rows="1"
         onkeydown="handleKeyDown(event)" oninput="autoResize(this)"></textarea>
       <button class="send-btn" id="send-btn" onclick="sendMessage()">
@@ -154,33 +197,67 @@
   </div>
 </div>
 
+<!-- Modal para ver imagen ampliada -->
+<div class="image-modal" id="image-modal" onclick="this.classList.remove('visible')">
+  <img id="image-modal-img" alt="">
+</div>
+
 <script>
-// ── CREDENCIALES ──────────────────────────────────────────────
-const CREDENTIALS = [
-  { user: 'equipotuterapia', pass: 'tute2026' },
-  { user: 'admin', pass: 'tuterapia2026' }
-];
+// ── AUTH (token-based, credenciales en el backend) ────────────
+const TOKEN_KEY = 'tt_chat_token';
 
-// ── Lógica de chat conectada a Claude vía /api/chat ──
+function getToken() { return sessionStorage.getItem(TOKEN_KEY); }
+function setToken(t) { sessionStorage.setItem(TOKEN_KEY, t); }
+function clearToken() { sessionStorage.removeItem(TOKEN_KEY); }
 
-// ── AUTH ──────────────────────────────────────────────────────
-function handleLogin() {
+async function handleLogin() {
   const user = document.getElementById('login-user').value.trim();
   const pass = document.getElementById('login-pass').value.trim();
   const err = document.getElementById('login-error');
-  const valid = CREDENTIALS.some(c => c.user === user && c.pass === pass);
-  if (valid) {
-    err.style.display = 'none';
-    document.getElementById('login-screen').style.display = 'none';
-    const chat = document.getElementById('chat-screen');
-    chat.style.display = 'flex';
-    chat.style.flexDirection = 'column';
-  } else {
+  const btn = document.querySelector('.login-btn');
+
+  if (!user || !pass) {
+    err.textContent = 'Completá usuario y contraseña.';
     err.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Ingresando...';
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user, pass })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      err.textContent = data.error || 'Usuario o contraseña incorrectos.';
+      err.style.display = 'block';
+      return;
+    }
+    setToken(data.token);
+    err.style.display = 'none';
+    showChat();
+  } catch (e) {
+    err.textContent = 'No pude conectarme. Probá de nuevo en un momento.';
+    err.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Ingresar';
   }
 }
 
+function showChat() {
+  document.getElementById('login-screen').style.display = 'none';
+  const chat = document.getElementById('chat-screen');
+  chat.style.display = 'flex';
+  chat.style.flexDirection = 'column';
+}
+
 function handleLogout() {
+  clearToken();
   document.getElementById('chat-screen').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('login-user').value = '';
@@ -194,6 +271,9 @@ function handleLogout() {
 document.getElementById('login-pass').addEventListener('keydown', e => {
   if (e.key === 'Enter') handleLogin();
 });
+
+// Si ya hay token guardado, saltar el login (el backend validará si sigue vivo)
+if (getToken()) showChat();
 
 // ── CHAT ──────────────────────────────────────────────────────
 function autoResize(el) {
@@ -217,7 +297,7 @@ function renderText(text) {
     .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
 }
 
-function appendMessage(role, text, chips) {
+function appendMessage(role, text, chips, imageDataUrl) {
   const body = document.getElementById('chat-body');
   const welcome = body.querySelector('.welcome-msg');
   if (welcome) welcome.remove();
@@ -231,7 +311,22 @@ function appendMessage(role, text, chips) {
 
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble';
-  bubble.innerHTML = renderText(text);
+
+  // Si hay imagen adjunta (solo user), la mostramos arriba del texto
+  if (imageDataUrl && role === 'user') {
+    const img = document.createElement('img');
+    img.className = 'msg-image';
+    img.src = imageDataUrl;
+    img.alt = 'Imagen adjunta';
+    img.onclick = () => openImageModal(imageDataUrl);
+    bubble.appendChild(img);
+  }
+
+  if (text) {
+    const textDiv = document.createElement('div');
+    textDiv.innerHTML = renderText(text);
+    bubble.appendChild(textDiv);
+  }
 
   msg.appendChild(avatar);
   msg.appendChild(bubble);
@@ -289,169 +384,163 @@ function removeTyping() {
   if (t) t.remove();
 }
 
-function sendText(text) {
-  appendMessage('user', text);
-  processQuery(text);
+// ── ADJUNTAR IMAGEN ───────────────────────────────────────────
+let attachedImage = null; // { dataUrl, base64, mediaType, name, sizeKB }
+
+const MAX_IMAGE_SIZE_MB = 5;
+const MAX_IMAGE_DIMENSION = 1280; // px (lado más largo)
+const COMPRESS_QUALITY = 0.85;
+
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    alert('Por favor adjuntá una imagen (JPG, PNG, WEBP).');
+    event.target.value = '';
+    return;
+  }
+  if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+    alert(`La imagen es muy pesada. Máximo ${MAX_IMAGE_SIZE_MB}MB.`);
+    event.target.value = '';
+    return;
+  }
+
+  // Leer y comprimir
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    compressImage(e.target.result, file.name).then(result => {
+      attachedImage = result;
+      showImagePreview(result);
+    }).catch(err => {
+      console.error('Error procesando imagen:', err);
+      alert('No pude procesar la imagen. Probá con otra.');
+    });
+  };
+  reader.readAsDataURL(file);
+  event.target.value = ''; // reset por si vuelven a elegir el mismo archivo
+}
+
+function compressImage(dataUrl, fileName) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      // Redimensionar manteniendo proporciones
+      if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+        const ratio = Math.min(MAX_IMAGE_DIMENSION / width, MAX_IMAGE_DIMENSION / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // JPEG comprimido (más liviano que PNG para fotos/screenshots)
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', COMPRESS_QUALITY);
+      const base64 = compressedDataUrl.split(',')[1];
+      const sizeKB = Math.round((base64.length * 3 / 4) / 1024);
+
+      resolve({
+        dataUrl: compressedDataUrl,
+        base64: base64,
+        mediaType: 'image/jpeg',
+        name: fileName,
+        sizeKB: sizeKB
+      });
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+}
+
+function showImagePreview(img) {
+  document.getElementById('image-preview-thumb').src = img.dataUrl;
+  document.getElementById('image-preview-name').textContent = img.name;
+  document.getElementById('image-preview-size').textContent = img.sizeKB + ' KB';
+  document.getElementById('image-preview-row').classList.add('visible');
+  document.getElementById('attach-btn').classList.add('has-image');
+}
+
+function removeAttachedImage() {
+  attachedImage = null;
+  document.getElementById('image-preview-row').classList.remove('visible');
+  document.getElementById('attach-btn').classList.remove('has-image');
+}
+
+function openImageModal(dataUrl) {
+  const modal = document.getElementById('image-modal');
+  document.getElementById('image-modal-img').src = dataUrl;
+  modal.classList.add('visible');
+}
+
+// ── ENVÍO DE MENSAJES ─────────────────────────────────────────
+function sendText(text, image) {
+  appendMessage('user', text, null, image ? image.dataUrl : null);
+  processQuery(text, image);
 }
 
 function sendMessage() {
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
-  if (!text) return;
+  // Permitir enviar solo imagen, solo texto, o ambos. Pero algo tiene que haber.
+  if (!text && !attachedImage) return;
+
+  const imageToSend = attachedImage; // capturar antes de limpiar
   input.value = '';
   input.style.height = 'auto';
-  sendText(text);
+  removeAttachedImage();
+
+  sendText(text, imageToSend);
 }
 
-const API_KEY = "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";
-const SYSTEM = `Sos el asistente virtual del equipo de psicólogos y psicólogas de Tu Terapia, una plataforma de salud mental que opera en Uruguay y Argentina.
-
-Tu rol es ayudar a los profesionales con dudas sobre el uso de la plataforma, procesos administrativos, beneficios, y situaciones con pacientes. Sos cálido, cercano, y hablás siempre de "vos". Nunca inventás información. Si no sabés algo con certeza, derivás al Team Leader correspondiente.
-
-INFORMACIÓN CLAVE DE LA PLATAFORMA:
-
-=== PRIMEROS PASOS ===
-Tu perfil ya está activo cuando te sumás. Los pasos para activarlo:
-1. Ir a tuterapia.com.uy (UY) o tuterapia.com.ar (AR) → "Ingresar" → "¿Olvidaste tu contraseña?" → "Recuperar contraseña". Ingresar el mail y crear contraseña. Es normal usar esta opción aunque sea el primer ingreso.
-2. Una vez adentro: "Configurar Disponibilidad" → agregar días y horarios.
-3. En "Mi Perfil" → seleccionar hasta 12 etiquetas (ansiedad, TCC, duelo, etc.). Guardar cambios.
-4. Revisar y editar la descripción desde "Mi Perfil".
-
-=== PLATAFORMA Y CALENDARIO ===
-- "Configurar Disponibilidad": se agregan horarios por día (lunes a domingo). Se puede poner en bloques o de a una hora. Se puede modificar siempre. Se diferencia por modalidad (online, presencial, ambas).
-- "Modo Vacaciones": se activa desde la pantalla de disponibilidad para bloquear un rango de fechas.
-- "Ver Perfil": muestra el perfil público con horarios. El link se puede compartir con pacientes o colegas para derivaciones.
-- Los pacientes pueden ver horarios disponibles con 4 horas de anticipación mínima.
-- Cuando agendás una sesión, ese horario se saca automáticamente del calendario.
-- Solo se pueden agendar sesiones si el paciente ya pagó.
-
-=== TIPOS DE SITUACIONES CON PACIENTES ===
-A) Paciente que te selecciona SIN comprar sesión: no tiene acceso a tus datos. Vos sí ves los suyos. Contactarlo por WhatsApp para que compre sesión, y luego agendarlo con "Agregar nueva sesión" o que elija horario de tu calendario.
-B) Paciente que reserva hora directamente del calendario: solo puede si ya compró sesión. Podés aprobar o rechazar. Importante contactarlo por WhatsApp para confirmar detalles (dirección, meet, etc.).
-C) Paciente que compró sesión pero no reservó horario: contactarlo por WhatsApp para coordinar, y agendar manualmente desde "Agregar nueva sesión".
-
-=== SESIONES - BOTONES Y TÉRMINOS ===
-- "Sesiones por aprobar" = horarios que un paciente reservó y están esperando tu confirmación. Podés aprobarlas todas de un click.
-- "Sesiones agendadas" = sesiones ya aprobadas que se realizarán en el futuro.
-- "Sesiones realizadas" = sesiones del pasado. Acá confirmás que se realizaron clickeando "Ya se realizó la sesión". IMPORTANTE: confirmar es la única forma de cobrarlas.
-- Sesiones no confirmadas al último día del mes se confirman automáticamente.
-- Si una sesión hay que reprogramar → cancelarla y agendar de nuevo.
-- No se pueden agendar sesiones en el pasado.
-
-=== LISTADO DE PACIENTES ===
-- "Sesiones realizadas" en el listado = sesiones agendadas y confirmadas.
-- "Sesiones compradas" = sesiones pagas aún no agendadas.
-- "Desactivar paciente" = solo afecta tu listado para organización, no desvincula al paciente.
-
-=== DERIVAR PACIENTE (entre colegas) ===
-Siempre que llegue un paciente por la plataforma y no lo podés atender, hay que derivarlo a alguien de la plataforma (incumplir esto va contra el contrato). Pasos:
-1. Publicar en el grupo de WhatsApp: género, ubicación, problemática si es necesario, corriente, horarios.
-2. Los colegas interesados comparten su perfil de Tu Terapia por chat privado.
-3. Al concretar: escribir en el grupo que ya se realizó la derivación (respondiendo al mensaje original).
-4. En la plataforma: botón "Derivar paciente" → seleccionar paciente y terapeuta → confirmar.
-
-=== FACTURACIÓN - GENERAL ===
-- Fecha de liquidación: 1° de cada mes (llega mail). Incluye datos para hacer la factura y link con la liquidación.
-- La factura se sube los primeros 3 días hábiles del mes en "Mi Facturación" → "Subir facturas" (PDF) → seleccionar mes/año → "Enviar factura".
-- Las sesiones se facturan en el mes que se agendaron (NO se acumulan).
-- La liquidación tiene hojas por modalidad: Online Exterior, Online Interior, Presencial. Hay que sumar todo y hacer UNA SOLA factura.
-- Si hay errores en la factura → hacer nota de crédito y subir también la factura correcta.
-
-=== FACTURACIÓN URUGUAY ===
-- Sesiones online e interior: llevan IVA 10%.
-- Sesiones exterior: EXENTAS de IVA.
-- Tipo de comprobante: E-FACTURA.
-- Datos: Razón social: Tu Terapia SAS | RUT: 218569680013 | Dirección: Brito del Pino 1185, apto 101.
-- Pago de honorarios: día 9 de cada mes (o siguiente hábil). Transferencia bancaria. Puede tardar hasta 24hs en acreditarse.
-- Consultas de facturación: admin@tuterapia.com.uy (respuesta hasta 48hs hábiles).
-
-=== FACTURACIÓN ARGENTINA ===
-- Tipo de comprobante: Factura C (desde AFIP → Comprobantes en Línea → Generar Comprobantes).
-- Condición de venta: Contado.
-- Datos: Razón social: Tu Terapia SRL | CUIT: 30-71705093-9 | Dirección: Gral Roca 3110, Mar del Plata.
-- Pago de honorarios: día 10 de cada mes (o siguiente hábil). Transferencia bancaria. Puede tardar hasta 24hs en acreditarse.
-- Consultas de facturación: admin@tuterapia.com.ar (respuesta hasta 48hs hábiles).
-
-=== PRECIOS SESIONES ===
-- UY: https://www.tuterapia.com.uy/?q=precios
-- AR: https://www.tuterapia.com.ar/?q=precios
-- Los honorarios propios se ven en la descripción del grupo de WhatsApp de cada país.
-
-=== SITUACIONES FRECUENTES CON PACIENTES ===
-- Cancelación de última hora: política = 24hs de anticipación. Si cancela con menos o no se presenta, pierde la sesión y el terapeuta puede cobrarla confirmándola. En casos excepcionales se puede reagendar o devolver el crédito. Siempre recordarle al paciente las políticas.
-- Paciente no responde mensajes: dejar 24hs y probar por mail. Si no responde en ningún intento, no es necesario hacer nada más.
-- Paciente que no aparece en listado al agendarlo: probablemente tenga seleccionado a otro colega. Pedirle que corrija desde su perfil.
-- Sesión no aparece para aprobar: si el paciente solo compró sesión pero no reservó horario, no hay nada para aprobar. Hay que contactarlo para coordinar.
-- Paciente no figura en listado aunque compró sesión: puede que haya seleccionado a otro terapeuta. Compartirle tu perfil para que te re-seleccione.
-
-=== PACIENTES ESPECIALES ===
-- Pareja/familia/menores de edad: no hay botón específico. Protocolos en: https://drive.google.com/drive/folders/1BATIrg_MSh8fDCZof9555UkRraWhQQdL
-- Dificultad económica: formulario para descuento especial (4 sesiones, una vez por mes): https://forms.gle/hSCwWnsFZ5mGRRAG8
-- Convenios empresariales: ver detalle en https://www.canva.com/design/DAGWj645RwE/XBHbZCICjCnMqnRi73sgrg/view
-- Sesiones online: cada terapeuta usa su propia herramienta (Google Meet, Zoom, etc.) y comparte el link con el paciente.
-- CX de pacientes (quejas, reembolsos, facturas de pacientes): https://wa.link/g7jraw (derivar directo, no intermediar).
-
-=== GESTIÓN DEL PERFIL ===
-- Foto de perfil o cambio de ubicación: contactar a Orne (Ornella Mamone) por WhatsApp: https://wa.me/message/NVV3NU3ZQRYWP1
-- Descripción y etiquetas: editar desde "Mi Perfil" y guardar cambios. Máximo 12 etiquetas.
-- Para no recibir pacientes nuevos: simplemente no cargar horarios.
-- No me llegan pacientes: revisar al menos 10hs semanales en calendario, 12 etiquetas completas, descripción actualizada. Para más ayuda: contactar a Orne.
-
-=== BENEFICIOS ===
-- Ver beneficios: https://www.canva.com/design/DAGwiKHgSqg/u-OommEsqxBxckK_nzsDaQ/view
-- Supervisiones individuales o terapia con colegas: crear perfil paciente desde otro mail, seleccionar al colega. Con 10% de descuento: https://forms.gle/hnbuRg37EmYrqQSg7
-- Biblioteca de material de estudio: https://drive.google.com/drive/folders/10CUB2bM_GLhuMjkMSlwK9XzMemlJ96pK
-- Clinical Labs (videos): https://vimeo.com/user/204048592/folder/20643704
-- Clinical Lab en vivo (quincenal): anotarse en https://forms.gle/vSfSQ5KcKj3caqG77
-
-=== SUPERVISIONES Y AUTOCUIDADO ===
-- TCC: grupales (4 cupos), lunes 14:30-16:00 → https://calendly.com/clinicaltuterapia/supervision-tu-terapia-clon-2
-- Psicoanálisis: grupales (4 cupos), lunes 16:00-17:30 → https://calendly.com/clinicaltuterapia/supervision-tu-terapia-clon-1
-- Gestalt/Psicología Positiva/Humanismo: lunes 8:00-9:30 → https://calendly.com/clinicaltuterapia/supervision-tu-terapia-clon
-- Autocuidado (12 cupos): https://calendly.com/clinicaltuterapia/tuautocuidado-2
-- Política cancelación: cancelar con 24hs en Calendly. Si no → sin acceso por 30 días.
-- Dudas supervisiones: clinical@tuterapia.com.uy
-
-=== PODCAST ===
-"Nos Pasan Cosas": YouTube: https://www.youtube.com/@tuterapiaoficial | Spotify: https://open.spotify.com/show/5MzFVy4KSISCC2wiGRcquF
-
-=== CANALES DE COMUNICACIÓN ===
-- Facturación y pagos: admin@tuterapia.com.uy (UY) / admin@tuterapia.com.ar (AR) — hasta 48hs hábiles.
-- Plataforma, perfil, derivaciones → primero siempre al Team Leader.
-- Foto de perfil, cambio de ubicación → Orne: https://wa.me/message/NVV3NU3ZQRYWP1
-- Contrato, constancias, desvinculación → cbarros@tuterapia.com.uy
-- CX pacientes: https://wa.link/g7jraw (solo para pacientes)
-
-=== TEAM LEADERS ===
-- Eugenia Mozzo (Uruguay): +598 94 911 834
-- Melisa Aguirre (Argentina): +54 9 11 5606-2380
-
-=== PAUTAS DE COMUNICACIÓN ===
-- WhatsApp: L a V 6:00-20:30, Sábados 9:00-16:00.
-- Grupos de WhatsApp: para derivaciones, motivación, comentarios constructivos, comunicaciones de la comunidad.
-- Consultas personales: siempre por privado con el Team Leader.
-
-=== REGLAS PARA VOS COMO ASISTENTE ===
-1. Siempre hablá de "vos", sos cercano/a y cálido/a.
-2. Nunca inventés información. Si no sabés, derivá al Team Leader.
-3. Si la consulta es específica de un país (facturación, honorarios, contactos), preguntá si es de Uruguay o Argentina antes de responder.
-4. Aclarás los términos cuando hay confusión (ej: "confirmar sesión" = clickear "Ya se realizó la sesión").
-5. Intentás hacer preguntas para guiar al profesional a la respuesta correcta.
-6. No inventés links, teléfonos ni mails que no estén en esta guía.
-7. Si derivás, aclarás a quién y por qué canal.
-8. Respondés de forma clara, con párrafos cortos, usando emojis con moderación.
-9. Si mencionás un link, ponelo completo.`;
 let conversationHistory = [];
 
-async function processQuery(text) {
+async function processQuery(text, image) {
   showTyping();
-  conversationHistory.push({ role: 'user', content: text });
+
+  // Construir el contenido del mensaje en el formato que espera Claude API.
+  // - Sin imagen: content es un string (compatibilidad con el formato anterior)
+  // - Con imagen: content es un array con un bloque image y opcionalmente un bloque text
+  let userContent;
+  if (image) {
+    userContent = [
+      {
+        type: 'image',
+        source: {
+          type: 'base64',
+          media_type: image.mediaType,
+          data: image.base64
+        }
+      }
+    ];
+    if (text) {
+      userContent.push({ type: 'text', text: text });
+    }
+  } else {
+    userContent = text;
+  }
+
+  conversationHistory.push({ role: 'user', content: userContent });
+
   try {
     const response = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + (getToken() || '')
+      },
       body: JSON.stringify({ messages: conversationHistory })
     });
+    if (response.status === 401) {
+      // Token vencido o inválido → forzar re-login
+      removeTyping();
+      conversationHistory.pop(); // sacar el mensaje que no se procesó
+      handleLogout();
+      return;
+    }
     const data = await response.json();
     removeTyping();
     if (!response.ok) throw new Error(data.error || 'Error API');
