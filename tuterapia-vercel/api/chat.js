@@ -2,10 +2,37 @@
 // La API key vive en Vercel como variable de entorno (ANTHROPIC_API_KEY)
 // El frontend nunca la ve
 
+import crypto from 'crypto';
+
+// ── VERIFICACIÓN DE TOKEN (auth) ───────────────────────────────
+function verifyToken(token, secret) {
+  if (!token || typeof token !== 'string') return null;
+  const [data, sig] = token.split('.');
+  if (!data || !sig) return null;
+  const expected = crypto.createHmac('sha256', secret).update(data).digest('base64url');
+  if (sig.length !== expected.length) return null;
+  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(data, 'base64url').toString());
+    if (payload.exp && Date.now() > payload.exp) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
 export default async function handler(req, res) {
   // Solo aceptamos POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
+  }
+
+  // ── Verificar token antes de cualquier cosa ─────────────────
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  const session = verifyToken(token, process.env.AUTH_SECRET);
+  if (!session) {
+    return res.status(401).json({ error: 'No autorizado' });
   }
 
   try {
@@ -31,6 +58,7 @@ REGLAS FUNDAMENTALES:
 8. No inventés links, teléfonos ni mails que no estén en esta guía.
 9. Si las respuestas requieren pasos, ponelos numerados, uno por línea.
 10. Si una consulta puede tener varios sub-casos (ej: paciente que ya pagó vs no pagó), preguntá directamente por la variable que diferencia (ej: "¿el paciente ya pagó la sesión?") en vez de listar todos los escenarios posibles.
+11. IMÁGENES: si el psicólogo/a adjunta una imagen (screenshot del dashboard, captura de WhatsApp, error en pantalla, etc.), describí brevemente lo que ves y respondé en base a eso. Si la imagen contiene información identificable de un paciente, recordale que en este chat no compartimos datos de pacientes y pedile que la describa en palabras.
 
 === PRIMEROS PASOS EN LA PLATAFORMA ===
 El perfil ya está activo cuando se suman. Pasos:
@@ -321,7 +349,11 @@ Si NO sabés con certeza la respuesta a algo, NO INVENTES. Decí algo como: "No 
     }
 
     const data = await response.json();
-    const reply = data.content[0].text;
+    // Extraer texto de la respuesta (robusto ante múltiples bloques)
+    const reply = (data.content || [])
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('\n') || '...';
 
     return res.status(200).json({ reply });
 
@@ -330,3 +362,10 @@ Si NO sabés con certeza la respuesta a algo, NO INVENTES. Decí algo como: "No 
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 }
+
+// Subir el límite del body para que entren imágenes en base64
+export const config = {
+  api: {
+    bodyParser: { sizeLimit: '10mb' }
+  }
+};
