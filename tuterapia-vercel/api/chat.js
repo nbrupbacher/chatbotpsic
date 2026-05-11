@@ -183,6 +183,7 @@ PACKS DISPONIBLES (online, en el perfil del paciente):
 - Sesión individual
 - Pack Mensual: 4 sesiones con 5% off
 - Pack 3 meses: 12 sesiones con 10% off
+- Pack 5 meses: 20 sesiones con 15% off
 - Anualidad: 48 sesiones con 20% off
 
 Las sesiones NO tienen vencimiento, se pueden usar cuando el paciente quiera.
