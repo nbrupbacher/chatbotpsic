@@ -44,9 +44,13 @@ tuterapia-vercel/
 2. **Add New** → **Project**
 3. Importar el repositorio de GitHub
 4. **Antes de hacer deploy:** ir a **Environment Variables** y agregar:
-   - **Key:** `ANTHROPIC_API_KEY`
-   - **Value:** la API key del paso 1
+   - **Key:** `ANTHROPIC_API_KEY` → **Value:** la API key del paso 1
+   - **Key:** `SUPABASE_URL` → **Value:** `https://bnseowqysefrnzcjdqiq.supabase.co`
+   - **Key:** `SUPABASE_KEY` → **Value:** la key publicable del proyecto Supabase
    - Aplicar a: Production, Preview, Development
+
+   Las dos de Supabase son opcionales: si no están, el chat funciona igual y
+   simplemente no se registran las conversaciones.
 5. Click en **Deploy**
 
 ### 5. Probar el deploy
@@ -80,6 +84,34 @@ Hacer push a GitHub y Vercel deployea automáticamente.
 ### Actualizar la base de conocimiento
 
 Editar `api/chat.js`, buscar la variable `systemPrompt` y actualizar la información ahí.
+
+### Consultar las conversaciones
+
+Las consultas quedan registradas en la tabla `chat_conversaciones` del proyecto
+Supabase `tuterapia-rrhh`. Se consultan desde el **SQL Editor** del dashboard:
+
+```sql
+-- Lo más preguntado en los últimos 30 días
+select pregunta, count(*)
+from chat_conversaciones
+where creado_en > now() - interval '30 days'
+group by pregunta
+order by count(*) desc
+limit 50;
+
+-- Una conversación completa, en orden
+select turno, pregunta, respuesta
+from chat_conversaciones
+where conversacion_id = '<id>'
+order by turno;
+```
+
+**Qué NO se guarda:** las imágenes. Las capturas suelen tener datos de pacientes
+y pesan de más, así que solo queda el flag `tuvo_imagen` y el texto que las
+acompañaba.
+
+**Retención:** hoy no hay borrado automático. Conviene definir un plazo (por
+ejemplo 90 días) y programar la limpieza.
 
 ### Monitorear el uso
 

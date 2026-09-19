@@ -21,6 +21,78 @@ function verifyToken(token, secret) {
   }
 }
 
+// ── REGISTRO DE CONVERSACIONES (Supabase) ──────────────────────
+// Guarda pregunta + respuesta para poder analizar qué consulta el equipo.
+// NO guarda imágenes: solo el flag `tuvo_imagen`. Las capturas suelen tener
+// datos de pacientes y pesan de más, así que se quedan fuera de la base.
+// Si falta config o el insert falla, el chat sigue funcionando igual.
+
+// Separa el texto de un mensaje de su posible imagen.
+// El frontend manda `content` como string (solo texto) o como array de bloques
+// (cuando hay imagen adjunta).
+function extraerContenido(content) {
+  if (typeof content === 'string') {
+    return { texto: content, tuvoImagen: false };
+  }
+  if (Array.isArray(content)) {
+    const texto = content
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('\n');
+    return { texto, tuvoImagen: content.some(b => b.type === 'image') };
+  }
+  return { texto: '', tuvoImagen: false };
+}
+
+// El frontend manda el historial completo en cada request, así que el primer
+// mensaje del array es estable durante toda la charla: sirve para agrupar los
+// turnos de una misma conversación sin tocar el frontend.
+function derivarConversacionId(usuario, messages) {
+  const primero = messages.find(m => m.role === 'user');
+  const semilla = extraerContenido(primero?.content).texto.slice(0, 200);
+  return crypto
+    .createHash('sha256')
+    .update(`${usuario}|${semilla}`)
+    .digest('hex')
+    .slice(0, 32);
+}
+
+async function registrarConversacion({ usuario, messages, reply }) {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_KEY;
+  if (!url || !key) return; // sin config, no registramos y no molestamos
+
+  const ultimoUsuario = [...messages].reverse().find(m => m.role === 'user');
+  if (!ultimoUsuario) return;
+
+  const { texto, tuvoImagen } = extraerContenido(ultimoUsuario.content);
+
+  const fila = {
+    conversacion_id: derivarConversacionId(usuario, messages),
+    usuario,
+    turno: messages.filter(m => m.role === 'user').length,
+    pregunta: texto,
+    respuesta: reply,
+    tuvo_imagen: tuvoImagen
+  };
+
+  const res = await fetch(`${url}/rest/v1/chat_conversaciones`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      // Si Vercel reintenta la request, el índice único evita duplicar la fila.
+      Prefer: 'return=minimal,resolution=ignore-duplicates'
+    },
+    body: JSON.stringify(fila)
+  });
+
+  if (!res.ok) {
+    console.error('No se pudo registrar la conversación:', await res.text());
+  }
+}
+
 export default async function handler(req, res) {
   // Solo aceptamos POST
   if (req.method !== 'POST') {
@@ -904,6 +976,15 @@ Si NO sabés con certeza la respuesta a algo, NO INVENTES. Decí algo como: "No 
       .filter(b => b.type === 'text')
       .map(b => b.text)
       .join('\n') || '...';
+
+    // Registramos la conversación antes de responder. En Vercel la función se
+    // congela apenas devolvemos la respuesta, así que un insert sin await se
+    // podría perder. Si falla, lo logueamos y seguimos: el chat no se corta.
+    try {
+      await registrarConversacion({ usuario: session.user, messages, reply });
+    } catch (err) {
+      console.error('Fallo el registro de la conversación:', err);
+    }
 
     return res.status(200).json({ reply });
 
