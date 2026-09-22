@@ -68,33 +68,35 @@ async function registrarConversacion({ usuario, messages, reply }) {
   const { texto, tuvoImagen } = extraerContenido(ultimoUsuario.content);
 
   const fila = {
-    conversacion_id: derivarConversacionId(usuario, messages),
-    usuario,
-    turno: messages.filter(m => m.role === 'user').length,
-    pregunta: texto,
-    respuesta: reply,
-    tuvo_imagen: tuvoImagen
+    p_conversacion_id: derivarConversacionId(usuario, messages),
+    p_usuario: usuario,
+    p_turno: messages.filter(m => m.role === 'user').length,
+    p_pregunta: texto,
+    p_respuesta: reply,
+    p_tuvo_imagen: tuvoImagen
   };
 
   const headers = {
     'Content-Type': 'application/json',
-    apikey: key,
-    // `on_conflict` + `resolution=ignore-duplicates` hacen que un reintento de
-    // Vercel no duplique la fila: choca contra el índice único y se descarta.
-    Prefer: 'return=minimal,resolution=ignore-duplicates'
+    apikey: key
   };
 
   // Las keys publicables nuevas (sb_publishable_...) no son JWT: si se mandan
-  // en Authorization, el gateway intenta parsearlas como token y devuelve 401.
-  // Solo las legacy (eyJ...) van en ese header.
+  // en Authorization, el gateway intenta parsearlas como token. Solo las legacy
+  // (eyJ...) van en ese header.
   if (key.startsWith('eyJ')) {
     headers.Authorization = `Bearer ${key}`;
   }
 
-  const res = await fetch(
-    `${url}/rest/v1/chat_conversaciones?on_conflict=conversacion_id,turno`,
-    { method: 'POST', headers, body: JSON.stringify(fila) }
-  );
+  // Escribimos vía RPC y no contra la tabla: PostgREST usa RETURNING para
+  // contar filas, lo que obliga a evaluar la policy de SELECT y hace fallar un
+  // insert directo (42501). La función es SECURITY DEFINER y devuelve void, así
+  // que el rol anon puede registrar sin poder leer nada de la base.
+  const res = await fetch(`${url}/rest/v1/rpc/chat_registrar`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(fila)
+  });
 
   if (!res.ok) {
     console.error('No se pudo registrar la conversación:', await res.text());

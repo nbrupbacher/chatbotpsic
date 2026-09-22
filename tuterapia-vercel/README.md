@@ -106,6 +106,12 @@ where conversacion_id = '<id>'
 order by turno;
 ```
 
+**Cómo escribe:** el backend no inserta contra la tabla, sino que llama a la
+función `chat_registrar` (SECURITY DEFINER). Así el rol `anon` solo puede
+registrar: no puede leer los logs ni ninguna otra tabla del proyecto. Un insert
+directo además falla, porque PostgREST usa `RETURNING` para contar filas y eso
+obliga a evaluar la policy de SELECT, que a propósito no existe.
+
 **Qué NO se guarda:** las imágenes. Las capturas suelen tener datos de pacientes
 y pesan de más, así que solo queda el flag `tuvo_imagen` y el texto que las
 acompañaba.
