@@ -76,17 +76,25 @@ async function registrarConversacion({ usuario, messages, reply }) {
     tuvo_imagen: tuvoImagen
   };
 
-  const res = await fetch(`${url}/rest/v1/chat_conversaciones`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      // Si Vercel reintenta la request, el índice único evita duplicar la fila.
-      Prefer: 'return=minimal,resolution=ignore-duplicates'
-    },
-    body: JSON.stringify(fila)
-  });
+  const headers = {
+    'Content-Type': 'application/json',
+    apikey: key,
+    // `on_conflict` + `resolution=ignore-duplicates` hacen que un reintento de
+    // Vercel no duplique la fila: choca contra el índice único y se descarta.
+    Prefer: 'return=minimal,resolution=ignore-duplicates'
+  };
+
+  // Las keys publicables nuevas (sb_publishable_...) no son JWT: si se mandan
+  // en Authorization, el gateway intenta parsearlas como token y devuelve 401.
+  // Solo las legacy (eyJ...) van en ese header.
+  if (key.startsWith('eyJ')) {
+    headers.Authorization = `Bearer ${key}`;
+  }
+
+  const res = await fetch(
+    `${url}/rest/v1/chat_conversaciones?on_conflict=conversacion_id,turno`,
+    { method: 'POST', headers, body: JSON.stringify(fila) }
+  );
 
   if (!res.ok) {
     console.error('No se pudo registrar la conversación:', await res.text());
