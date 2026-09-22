@@ -263,6 +263,7 @@ function handleLogout() {
   document.getElementById('login-user').value = '';
   document.getElementById('login-pass').value = '';
   conversationHistory = [];
+  conversationId = nuevoConversationId();
   // Restaurar mensaje de bienvenida
   const body = document.getElementById('chat-body');
   body.innerHTML = `<div class="welcome-msg"><h2 class="welcome-title">¡Hola! ¿En qué te ayudo? 👋</h2><p class="welcome-sub">Podés preguntarme sobre la plataforma, pacientes, facturación, beneficios y más.</p></div>`;
@@ -498,6 +499,16 @@ function sendMessage() {
 
 let conversationHistory = [];
 
+// Id propio de esta conversación. Se manda al backend para agrupar los turnos
+// sin ambigüedad: dos charlas que empiecen con el mismo texto ya no se mezclan.
+let conversationId = nuevoConversationId();
+
+function nuevoConversationId() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  // Fallback para navegadores viejos sin randomUUID.
+  return 'c-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+}
+
 async function processQuery(text, image) {
   showTyping();
 
@@ -532,7 +543,7 @@ async function processQuery(text, image) {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + (getToken() || '')
       },
-      body: JSON.stringify({ messages: conversationHistory })
+      body: JSON.stringify({ messages: conversationHistory, conversationId })
     });
     if (response.status === 401) {
       // Token vencido o inválido → forzar re-login

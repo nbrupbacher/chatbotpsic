@@ -57,7 +57,7 @@ function derivarConversacionId(usuario, messages) {
     .slice(0, 32);
 }
 
-async function registrarConversacion({ usuario, messages, reply }) {
+async function registrarConversacion({ usuario, messages, reply, conversacionId }) {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_KEY;
   if (!url || !key) return; // sin config, no registramos y no molestamos
@@ -68,7 +68,9 @@ async function registrarConversacion({ usuario, messages, reply }) {
   const { texto, tuvoImagen } = extraerContenido(ultimoUsuario.content);
 
   const fila = {
-    p_conversacion_id: derivarConversacionId(usuario, messages),
+    // El frontend manda su propio id; si falta (pestaña con la versión vieja
+    // todavía abierta) caemos al hash del primer mensaje.
+    p_conversacion_id: conversacionId || derivarConversacionId(usuario, messages),
     p_usuario: usuario,
     p_turno: messages.filter(m => m.role === 'user').length,
     p_pregunta: texto,
@@ -118,7 +120,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { messages } = req.body;
+    const { messages, conversationId } = req.body;
+
+    // Solo aceptamos un id con forma razonable: es lo único de este payload que
+    // termina agrupando filas, y no queremos basura en la columna.
+    const conversacionId =
+      typeof conversationId === 'string' && /^[\w-]{8,64}$/.test(conversationId)
+        ? conversationId
+        : null;
 
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: 'Faltan los mensajes' });
@@ -991,7 +1000,7 @@ Si NO sabés con certeza la respuesta a algo, NO INVENTES. Decí algo como: "No 
     // congela apenas devolvemos la respuesta, así que un insert sin await se
     // podría perder. Si falla, lo logueamos y seguimos: el chat no se corta.
     try {
-      await registrarConversacion({ usuario: session.user, messages, reply });
+      await registrarConversacion({ usuario: session.user, messages, reply, conversacionId });
     } catch (err) {
       console.error('Fallo el registro de la conversación:', err);
     }

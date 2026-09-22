@@ -88,23 +88,35 @@ Editar `api/chat.js`, buscar la variable `systemPrompt` y actualizar la informac
 ### Consultar las conversaciones
 
 Las consultas quedan registradas en la tabla `chat_conversaciones` del proyecto
-Supabase `tuterapia-rrhh`. Se consultan desde el **SQL Editor** del dashboard:
+Supabase `tuterapia-rrhh`. Para leerlas hay dos vistas que dejan todo con
+numeración correlativa y hora local (la tabla cruda guarda UUIDs y UTC):
 
 ```sql
--- Lo más preguntado en los últimos 30 días
+-- Para exportar a CSV: una fila por turno, charlas en orden y seguidas.
+select * from chat_conversaciones_legible;
+
+-- Para leer: una fila por conversación, con el diálogo entero en un campo.
+select * from chat_transcripciones order by conversacion desc;
+
+-- Una conversación puntual
+select conversacion_completa from chat_transcripciones where conversacion = 12;
+
+-- Lo más preguntado del último mes
 select pregunta, count(*)
 from chat_conversaciones
 where creado_en > now() - interval '30 days'
 group by pregunta
 order by count(*) desc
 limit 50;
-
--- Una conversación completa, en orden
-select turno, pregunta, respuesta
-from chat_conversaciones
-where conversacion_id = '<id>'
-order by turno;
 ```
+
+Las vistas están revocadas para `anon` y `authenticated`: se consultan desde el
+SQL Editor, que corre como `postgres`.
+
+**Cómo se agrupan:** el frontend genera un UUID por conversación y lo manda en
+cada request. Si no llega (pestaña vieja abierta), el backend cae a hashear
+usuario + primer mensaje, que agrupa bien salvo que la misma persona abra dos
+charlas con idéntico texto inicial.
 
 **Cómo escribe:** el backend no inserta contra la tabla, sino que llama a la
 función `chat_registrar` (SECURITY DEFINER). Así el rol `anon` solo puede
