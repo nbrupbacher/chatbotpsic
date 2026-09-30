@@ -131,6 +131,49 @@ acompañaba.
 **Retención:** hoy no hay borrado automático. Conviene definir un plazo (por
 ejemplo 90 días) y programar la limpieza.
 
+### Monitorear el costo y el caché
+
+El system prompt son ~15k tokens que se reenvían en cada mensaje, así que domina
+el costo. Va marcado con `cache_control` para que se cobre a ~0.1x mientras el
+caché esté caliente (TTL 5 minutos, cada lectura reinicia el reloj).
+
+Para ver si está pegando:
+
+```sql
+select
+  date_trunc('day', creado_en)::date            as dia,
+  count(*)                                      as mensajes,
+  sum(tokens_cache_leidos)                      as leidos_de_cache,
+  sum(tokens_entrada + tokens_cache_escritos)   as pagados_completos,
+  round(100.0 * sum(tokens_cache_leidos)
+        / nullif(sum(tokens_entrada + tokens_cache_escritos
+                     + tokens_cache_leidos), 0), 1) as pct_desde_cache
+from chat_conversaciones
+where tokens_entrada is not null
+group by 1 order by 1 desc;
+```
+
+Si `pct_desde_cache` queda cerca de 0, el caché no está pegando: lo más probable
+es que el tráfico llegue muy espaciado y el TTL de 5 minutos expire entre
+conversaciones. La salida es pasar a `ttl: "1h"` (escribir cuesta 2x en vez de
+1.25x, y conviene desde el tercer request).
+
+Costo aproximado por día, a precios de Sonnet 4.6 ($3/MTok entrada, $15 salida,
+caché leído $0.30/MTok):
+
+```sql
+select
+  date_trunc('day', creado_en)::date as dia,
+  count(*) as mensajes,
+  round((sum(tokens_entrada) * 3.0
+       + sum(tokens_cache_escritos) * 3.75
+       + sum(tokens_cache_leidos) * 0.30
+       + sum(tokens_salida) * 15.0) / 1000000.0, 4) as usd
+from chat_conversaciones
+where tokens_entrada is not null
+group by 1 order by 1 desc;
+```
+
 ### Monitorear el uso
 
 - **Vercel Dashboard** → ver invocaciones del endpoint `/api/chat`

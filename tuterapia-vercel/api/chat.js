@@ -57,7 +57,7 @@ function derivarConversacionId(usuario, messages) {
     .slice(0, 32);
 }
 
-async function registrarConversacion({ usuario, messages, reply, conversacionId }) {
+async function registrarConversacion({ usuario, messages, reply, conversacionId, modelo, uso }) {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_KEY;
   if (!url || !key) return; // sin config, no registramos y no molestamos
@@ -75,7 +75,15 @@ async function registrarConversacion({ usuario, messages, reply, conversacionId 
     p_turno: messages.filter(m => m.role === 'user').length,
     p_pregunta: texto,
     p_respuesta: reply,
-    p_tuvo_imagen: tuvoImagen
+    p_tuvo_imagen: tuvoImagen,
+    // Contadores de la API, para poder medir si el caché pega y cuánto sale
+    // cada mensaje. `tokens_entrada` es solo el resto NO cacheado: el prompt
+    // total es la suma de las tres columnas de entrada.
+    p_modelo: modelo || null,
+    p_tokens_entrada: uso?.input_tokens ?? null,
+    p_tokens_cache_escritos: uso?.cache_creation_input_tokens ?? null,
+    p_tokens_cache_leidos: uso?.cache_read_input_tokens ?? null,
+    p_tokens_salida: uso?.output_tokens ?? null
   };
 
   const headers = {
@@ -978,7 +986,19 @@ Si NO sabés con certeza la respuesta a algo, NO INVENTES. Decí algo como: "No 
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1024,
-        system: systemPrompt,
+        // El system prompt son ~15k tokens que se reenvían en CADA mensaje: es
+        // el costo dominante del bot. Marcarlo como cacheable hace que, mientras
+        // el caché esté caliente, se cobre a ~0.1x en vez de precio completo.
+        // Escribirlo cuesta 1.25x, así que conviene desde el segundo request.
+        // TTL por defecto 5 minutos, y cada lectura reinicia el reloj: con el
+        // equipo usándolo seguido se mantiene caliente solo.
+        system: [
+          {
+            type: 'text',
+            text: systemPrompt,
+            cache_control: { type: 'ephemeral' }
+          }
+        ],
         messages: messages
       })
     });
@@ -1000,7 +1020,11 @@ Si NO sabés con certeza la respuesta a algo, NO INVENTES. Decí algo como: "No 
     // congela apenas devolvemos la respuesta, así que un insert sin await se
     // podría perder. Si falla, lo logueamos y seguimos: el chat no se corta.
     try {
-      await registrarConversacion({ usuario: session.user, messages, reply, conversacionId });
+      await registrarConversacion({
+        usuario: session.user, messages, reply, conversacionId,
+        modelo: data.model,
+        uso: data.usage || {}
+      });
     } catch (err) {
       console.error('Fallo el registro de la conversación:', err);
     }
