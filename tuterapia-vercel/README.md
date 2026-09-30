@@ -133,9 +133,28 @@ ejemplo 90 días) y programar la limpieza.
 
 ### Monitorear el costo y el caché
 
-El system prompt son ~15k tokens que se reenvían en cada mensaje, así que domina
-el costo. Va marcado con `cache_control` para que se cobre a ~0.1x mientras el
-caché esté caliente (TTL 5 minutos, cada lectura reinicia el reloj).
+El system prompt son **18.440 tokens** (medido) que se reenvían en cada mensaje,
+así que domina el costo. Va marcado con `cache_control` y **TTL de 1 hora** para
+que se cobre a ~0.1x mientras el caché esté caliente; cada lectura reinicia el
+reloj.
+
+El TTL de 1h se eligió midiendo 371 requests reales: el 73% llega con menos de 5
+minutos de diferencia, pero otro 21% cae entre 5 y 60 minutos y con el TTL corto
+tenía que reescribir el caché. Escribir con 1h cuesta 2x en vez de 1.25x, y solo
+el 6% queda fuera de la ventana.
+
+Para reevaluar si el patrón de uso cambia:
+
+```sql
+with g as (
+  select extract(epoch from (creado_en - lag(creado_en) over (order by creado_en)))/60 as hueco
+  from chat_conversaciones
+)
+select count(*) filter (where hueco <= 5)                as lee_con_5min,
+       count(*) filter (where hueco > 5 and hueco <= 60) as necesita_1h,
+       count(*) filter (where hueco > 60)                as escribe_igual
+from g where hueco is not null;
+```
 
 Para ver si está pegando:
 
@@ -153,10 +172,12 @@ where tokens_entrada is not null
 group by 1 order by 1 desc;
 ```
 
-Si `pct_desde_cache` queda cerca de 0, el caché no está pegando: lo más probable
-es que el tráfico llegue muy espaciado y el TTL de 5 minutos expire entre
-conversaciones. La salida es pasar a `ttl: "1h"` (escribir cuesta 2x en vez de
-1.25x, y conviene desde el tercer request).
+Si `pct_desde_cache` baja, el tráfico se volvió más espaciado que el TTL: correr
+la consulta de huecos de arriba y reevaluar.
+
+**Ojo con las conversaciones de un solo turno:** escriben un caché que nadie lee,
+así que salen 2x. Solo convienen si otra conversación llega dentro de la hora y
+aprovecha ese caché — que es lo que pasa con el volumen actual.
 
 Costo aproximado por día, a precios de Sonnet 4.6 ($3/MTok entrada, $15 salida,
 caché leído $0.30/MTok):

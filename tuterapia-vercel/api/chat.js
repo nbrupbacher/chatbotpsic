@@ -986,17 +986,24 @@ Si NO sabés con certeza la respuesta a algo, NO INVENTES. Decí algo como: "No 
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1024,
-        // El system prompt son ~15k tokens que se reenvían en CADA mensaje: es
-        // el costo dominante del bot. Marcarlo como cacheable hace que, mientras
-        // el caché esté caliente, se cobre a ~0.1x en vez de precio completo.
-        // Escribirlo cuesta 1.25x, así que conviene desde el segundo request.
-        // TTL por defecto 5 minutos, y cada lectura reinicia el reloj: con el
-        // equipo usándolo seguido se mantiene caliente solo.
+        // El system prompt son 18.440 tokens que se reenvían en CADA mensaje: es
+        // el costo dominante del bot. Cacheado se cobra a ~0.1x mientras el
+        // caché esté caliente, y cada lectura reinicia el reloj.
+        //
+        // TTL de 1 hora en vez del de 5 minutos por defecto, medido sobre 371
+        // requests reales: el 73% llega con menos de 5 minutos de diferencia
+        // (lee con cualquiera de los dos TTL), pero otro 21% cae entre 5 y 60
+        // minutos y con el TTL corto tenía que reescribir. Escribir con TTL de
+        // 1h cuesta 2x en lugar de 1.25x, y solo 22 de los 371 quedan fuera de
+        // la ventana, así que el cambio se paga: $4.37 contra $8.48.
+        //
+        // Si el patrón de uso cambia a ráfagas muy separadas, reevaluar con la
+        // consulta de huecos del README.
         system: [
           {
             type: 'text',
             text: systemPrompt,
-            cache_control: { type: 'ephemeral' }
+            cache_control: { type: 'ephemeral', ttl: '1h' }
           }
         ],
         messages: messages
