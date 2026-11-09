@@ -597,7 +597,7 @@ function renderWelcome() {
     actions.appendChild(botonCta('🔄', 'Empezar el recorrido de nuevo', 'Desde el principio', iniciarRecorrido, true));
   } else {
     actions.appendChild(botonCta('🌱', 'Soy nuevo/a: empezar recorrido',
-      '9 pasos · entre 15 y 20 minutos · podés pausar cuando quieras', iniciarRecorrido));
+      '9 pasos · reservate 20 minutos para hacerlo de corrido', iniciarRecorrido));
   }
 
   const label = document.createElement('div');
@@ -729,7 +729,7 @@ function procesarMarcasRecorrido(reply) {
       const wrap = document.createElement('div');
       wrap.className = 'msg bot';
       wrap.style.paddingLeft = '42px';
-      const b = botonCta('🌱', 'Empezar recorrido', '9 pasos · entre 15 y 20 minutos', () => { wrap.remove(); iniciarRecorrido(); });
+      const b = botonCta('🌱', 'Empezar recorrido', '9 pasos · reservate 20 minutos', () => { wrap.remove(); iniciarRecorrido(); });
       b.style.maxWidth = '380px';
       wrap.appendChild(b);
       body.appendChild(wrap);
