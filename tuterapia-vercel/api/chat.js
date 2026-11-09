@@ -1144,6 +1144,12 @@ Te deseamos mucho éxito en este nuevo camino. 🌱✨"
 === REGLA CRÍTICA ===
 Si NO sabés con certeza la respuesta a algo, NO INVENTES. Decí algo como: "No tengo esa información puntual, te recomiendo escribirle a tu Team Leader" + el contacto correspondiente. Es preferible derivar antes que dar info incorrecta.`;
 
+    // Si el frontend pide stream, la respuesta se va mandando a medida que el
+    // modelo la escribe (NDJSON: una línea {"t": "..."} por pedazo y al final
+    // {"done": true}). Sin stream (pestañas con la versión vieja de la página)
+    // se responde como siempre: un JSON {reply} al final.
+    const quiereStream = req.body.stream === true;
+
     // Llamada a la API de Anthropic
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -1178,7 +1184,8 @@ Si NO sabés con certeza la respuesta a algo, NO INVENTES. Decí algo como: "No 
             cache_control: { type: 'ephemeral', ttl: '1h' }
           }
         ],
-        messages: messages
+        messages: messages,
+        stream: quiereStream
       })
     });
 
@@ -1188,21 +1195,43 @@ Si NO sabés con certeza la respuesta a algo, NO INVENTES. Decí algo como: "No 
       return res.status(500).json({ error: 'Error al conectar con el asistente' });
     }
 
-    const data = await response.json();
-    // Extraer texto de la respuesta (robusto ante múltiples bloques)
-    const reply = (data.content || [])
-      .filter(b => b.type === 'text')
-      .map(b => b.text)
-      .join('\n') || '...';
+    let reply, modelo, uso;
+    if (quiereStream) {
+      res.writeHead(200, {
+        'Content-Type': 'application/x-ndjson; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        'X-Accel-Buffering': 'no'
+      });
+      const enviar = obj => res.write(JSON.stringify(obj) + '\n');
+      const r = await leerStreamAnthropic(response, pedazo => enviar({ t: pedazo }));
+      if (r.error) {
+        console.error('Error de Anthropic durante el stream:', r.error);
+        enviar({ error: 'Error al conectar con el asistente' });
+      }
+      reply = r.texto || '...';
+      modelo = r.modelo;
+      uso = r.uso;
+    } else {
+      const data = await response.json();
+      // Extraer texto de la respuesta (robusto ante múltiples bloques)
+      reply = (data.content || [])
+        .filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join('\n') || '...';
+      modelo = data.model;
+      uso = data.usage || {};
+    }
 
     // Registramos la conversación antes de responder. En Vercel la función se
     // congela apenas devolvemos la respuesta, así que un insert sin await se
     // podría perder. Si falla, lo logueamos y seguimos: el chat no se corta.
+    // Con stream, esto pasa con el texto ya enviado y antes de cerrar la
+    // conexión, así que la persona no espera por el registro.
     try {
       await registrarConversacion({
         usuario: session.user, messages, reply, conversacionId,
-        modelo: data.model,
-        uso: data.usage || {}
+        modelo,
+        uso: uso || {}
       });
     } catch (err) {
       console.error('Fallo el registro de la conversación:', err);
@@ -1216,12 +1245,70 @@ Si NO sabés con certeza la respuesta a algo, NO INVENTES. Decí algo como: "No 
       }
     }
 
+    if (quiereStream) {
+      res.write(JSON.stringify({ done: true }) + '\n');
+      return res.end();
+    }
     return res.status(200).json({ reply });
 
   } catch (error) {
     console.error('Error en handler:', error);
+    // Si ya empezamos a mandar el stream no se pueden cambiar los headers:
+    // avisamos del error en una línea más y cerramos.
+    if (res.headersSent) {
+      res.write(JSON.stringify({ error: 'Error interno del servidor' }) + '\n');
+      return res.end();
+    }
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
+}
+
+// Lee el stream SSE de Anthropic, llama a onTexto con cada pedazo de texto y
+// devuelve el texto completo, el modelo y los contadores de uso (los mismos
+// campos que trae `usage` sin stream, para que el registro no cambie).
+async function leerStreamAnthropic(response, onTexto) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let texto = '';
+  let modelo = null;
+  let error = null;
+  const uso = {};
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    let corte;
+    while ((corte = buffer.indexOf('\n\n')) !== -1) {
+      const evento = buffer.slice(0, corte);
+      buffer = buffer.slice(corte + 2);
+      const datos = evento
+        .split('\n')
+        .filter(l => l.startsWith('data:'))
+        .map(l => l.slice(5).trim())
+        .join('');
+      if (!datos) continue;
+
+      let ev;
+      try { ev = JSON.parse(datos); } catch { continue; }
+
+      if (ev.type === 'message_start') {
+        modelo = ev.message?.model || null;
+        Object.assign(uso, ev.message?.usage || {});
+      } else if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') {
+        texto += ev.delta.text;
+        onTexto(ev.delta.text);
+      } else if (ev.type === 'message_delta' && ev.usage) {
+        // output_tokens final (acumulado) llega acá
+        Object.assign(uso, ev.usage);
+      } else if (ev.type === 'error') {
+        error = ev.error || ev;
+      }
+    }
+  }
+  return { texto, modelo, uso, error };
 }
 
 // Subir el límite del body para que entren imágenes en base64
