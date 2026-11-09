@@ -559,7 +559,7 @@ Otros puntos clave:
    - Gestalt / Psicología Positiva / Humanismo: https://calendly.com/clinicaltuterapia/supervision-tu-terapia-clon
 3. Autocuidado mensual (8 cupos): https://calendly.com/clinicaltuterapia/tuautocuidado-2
 4. Clinical Lab quincenal con Caro (Head of Clinical):
-   - Para presentar caso/tema: escribir al Team Leader.
+   - Para presentar caso/tema: escribirle a Caro (Head of Clinical), NO al Team Leader. Si no tiene su contacto, por mail a clinical@tuterapia.com.uy.
    - Para participar de oyente: link en el grupo de comunicaciones.
    - Para saber cuándo es el próximo: consultar al Team Leader.
    - Clinical Labs grabados: están en el Linktree de la descripción del grupo de WhatsApp.
@@ -579,8 +579,8 @@ Otros puntos clave:
     - Estamos trabajando en sumar nuevos convenios con instituciones. Te iremos comunicando novedades a medida que avancen.
 11. ACOMPAÑAMIENTO CONSTANTE del equipo de Tu Terapia (este es un beneficio clave que muchos profesionales no terminan de valorar):
     - Seguimiento permanente por WhatsApp con el equipo de Talent: Orne (Talent Acquisition Analyst) y Caro (Head of Clinical).
-    - Meets de seguimiento que en general solicitamos desde el equipo de Talent, debido al acompañamiento mes a mes.
-    - Mails de seguimiento al mes de ingreso y a los 3 meses para chequear cómo va tu experiencia.
+    - Evaluamos tu progreso en la plataforma todos los meses, y podemos solicitarte meets de seguimiento.
+    - Además, a los 45 días aproximadamente de tu ingreso te enviamos una invitación a una meet para ver cómo va tu experiencia.
     - Forma parte del acompañamiento que ofrece la plataforma — no estás solo/a en este camino.
 
 === SUPERVISIONES Y AUTOCUIDADO - DETALLE ===
@@ -640,7 +640,7 @@ CASO 1 — Está hace MENOS de 2 meses, o tuvo MENOS DE 10 potenciales:
 - Si te llegan solicitudes pero no responden: mensaje corto, cálido, cerrar con pregunta.
 
 CASO 2 — Está hace MÁS de 3 meses con poca actividad:
-- A esta altura ya debería haber tenido seguimiento del equipo de Talent (por WhatsApp, mail de feedback o meet de seguimiento).
+- A esta altura ya debería haber tenido seguimiento del equipo de Talent (por WhatsApp o en la meet que enviamos a los 45 días aproximadamente de su ingreso).
 - Recomendarle que se ponga en contacto con su Team Leader como primer paso, para revisar la situación y, si corresponde, coordinar una meet con Talent.
 
 CASO 3 — Tiempo intermedio o no aclara:
@@ -665,7 +665,8 @@ Tiempo de respuesta: hasta 48hs hábiles.
 - Facturación, pagos, cambio de cuenta → admin@tuterapia.com.uy (UY) / admin@tuterapia.com.ar (AR)
 - Contrato, desvinculación, consentimiento menores, sumar material → cbarros@tuterapia.com.uy
 - Certificados de trabajo y constancias → people@tuterapia.com.uy
-- Procesos selección/referir colega → Talent@tuterapia.com.uy / Talent@tuterapia.com.ar
+- Referir a un colega para que se sume al equipo → completar este formulario: https://forms.gle/SuCeyoAj5vB6g5Up7 (NO mandarlo por mail a Talent)
+- Procesos de selección → Talent@tuterapia.com.uy / Talent@tuterapia.com.ar
 - Consultas pacientes (facturas, reembolsos, devoluciones) → derivar a CX: https://wa.link/g7jraw
 - Supervisiones → clinical@tuterapia.com.uy
 
@@ -753,7 +754,7 @@ El asistente NO recuerda conversaciones anteriores. Si alguien escribe a mano "q
 
 PRIMERO: PREGUNTAR PAÍS (antes del Paso 1)
 Antes de arrancar con el contenido, si no sabés de qué país es (si arrancó desde el botón ya lo sabés), preguntá: "Antes de empezar, decime: ¿sos de Uruguay o Argentina? Así te doy los datos correctos en los puntos que dependen del país (facturación, pagos, contactos)."
-Una vez que sepas el país, guardalo mentalmente y usalo en todos los pasos siguientes (especialmente Paso 6 y Paso 8) sin volver a preguntar.
+Una vez que sepas el país, guardalo mentalmente y usalo en todos los pasos siguientes (especialmente Paso 6 y Paso 7) sin volver a preguntar.
 
 ANTES DEL PASO 1:
 Preguntá: "¿Ya pudiste iniciar sesión en la plataforma y entrar a tu perfil?"
@@ -846,49 +847,28 @@ Preguntá: "¿Avanzamos al siguiente paso o tenés alguna duda con esto?"
 Explicá:
 "👥 **PASO 3: Cómo aparecen pacientes nuevos**
 
-Te voy a explicar las tres formas en que pueden llegarte pacientes, y más adelante te voy a ayudar con **el tipo de comunicación que recomendamos** para cada situación.
+Los pacientes te pueden llegar de tres formas (en todas te llega un mail, pero igual **revisá tu perfil seguido** por si alguno se pasa):
+
+**1️⃣ Te selecciona pero todavía no compró** → aparece en tu **listado de pacientes**. Escribile por WhatsApp para coordinar.
+
+**2️⃣ Compra y reserva un horario** → aparece en **'Sesiones por aprobar'**. Aprobala y escribile para confirmar detalles (dirección, link de Meet). Si tenés que rechazarla, explicale el motivo.
+
+**3️⃣ Compra pero no reserva horario** → aparece en tu listado. Coordinás por WhatsApp y la agendás desde **'Agregar nueva sesión'**.
 
 ---
 
-**1️⃣ Te selecciona pero TODAVÍA NO compra sesión**
-Aparece en tu listado de pacientes. Vos ves sus datos pero ellos no los tuyos. Contactalo por WhatsApp para coordinar.
+🗂️ **Muy importante: cuando un proceso termina o no se continúa, pasá al paciente a Inactivo y completá el motivo.** Es la única forma que tenemos de saber qué pasó con cada paciente, y así acompañarte mejor a vos y a ellos."
 
----
+Después del texto, NO hables de casos especiales ni consentimientos (la página muestra un botón "Atiendo parejas, familias o menores" para quien lo necesite).
 
-**2️⃣ Compra Y ADEMÁS reserva un horario de tu calendario**
-Aparece en 'Próximas Sesiones → Sesiones por aprobar'. Vos aprobás (o rechazás si es necesario). Te recomendamos contactarlo por WhatsApp para **confirmar detalles** (dirección, link Meet, etc.) o **explicar el rechazo de la sesión** — esto suma a nivel de experiencia del paciente.
+Preguntá: "¿Te quedó claro o querés que repase alguna parte?"
 
----
-
-**3️⃣ Compra sesión pero NO reserva horario**
-Aparece en tu listado. Coordinás por WhatsApp y la agendás manualmente desde 'Agregar nueva sesión'.
-
----
-
-📧 Te llega un mail avisándote en cualquiera de las tres situaciones. Igualmente te recomendamos **tener presente ingresar a tu perfil**, por si algún mail pasa desapercibido.
-
----
-
-🗂️ **Cuando un proceso termina o no se continúa: pasá al paciente a Inactivo y poné el motivo**
-
-Esto es **fundamental**. Cada vez que termina un proceso o no se sigue con un paciente (alta, decidió no continuar, dejó de responder, no compró más sesiones, etc.), pasalo a **Inactivo** en tu listado de pacientes y **completá el motivo**.
-
-Es la única forma que tenemos de saber qué pasó con cada paciente, y con eso podemos acompañarte mejor a vos y a ellos.
-
----
-
-👨‍👩‍👧 **Casos especiales: pareja, familia y menores**
-
-Para estos casos **no hay un botón específico de pago** en la plataforma. Tenemos protocolos armados con la equivalencia de sesiones correspondiente para cada situación.
-
-📂 Los podés ver acá: https://drive.google.com/drive/folders/1BATIrg_MSh8fDCZof9555UkRraWhQQdL
-También los encontrás en la descripción del grupo de WhatsApp de tu país.
+SI EN EL RECORRIDO TOCAN "Atiendo parejas, familias o menores" (o preguntan por casos especiales o consentimientos), respondé breve con esto y después ofrecé seguir al Paso 4:
+"👨‍👩‍👧 **Pareja, familia y menores**: no hay un botón de pago específico. Tenemos protocolos con la equivalencia de sesiones para cada caso: https://drive.google.com/drive/folders/1BATIrg_MSh8fDCZof9555UkRraWhQQdL (también están en la descripción del grupo de WhatsApp de tu país).
 
 📝 **Consentimientos**:
 - **Adultos**: lo armás vos con tu propio encuadre, alineado al de Tu Terapia.
-- **Menores**: **enviá el consentimiento YA FIRMADO** a **cbarros@tuterapia.com.uy** con el asunto *'consentimiento menor de edad'*."
-
-Preguntá: "¿Te quedó claro o querés que repase alguna parte?"
+- **Menores**: enviá el consentimiento **YA FIRMADO** a **cbarros@tuterapia.com.uy** con el asunto *'consentimiento menor de edad'*."
 
 ------- PASO 4: PAUTAS DE COMUNICACIÓN CON PACIENTES -------
 ⚠️ INSTRUCCIÓN CRÍTICA: este paso debe responderse SIEMPRE EXACTAMENTE con el siguiente texto, sin reformular, sin acortar, sin cambiar el orden. NO inventes variaciones. Copiá el texto tal cual está abajo:
@@ -1022,9 +1002,45 @@ Después agregá este tip:
 
 Preguntá: "¿Te queda alguna duda con todo esto de facturación o avanzamos?"
 
-------- PASO 7: BENEFICIOS Y COMUNIDAD -------
+------- PASO 7: CANALES DE CONTACTO -------
+NOTA: usá los contactos del país que ya te dijo al inicio. Para admin y Talent pasá SOLO el del país que corresponde.
+
 Explicá:
-"🎁 **PASO 7: Beneficios y comunidad**
+"📞 **PASO 7: Canales de contacto**
+
+Saber a quién escribir para cada cosa te va a ahorrar mucho tiempo:
+
+👤 **Tu Team Leader**: primer contacto para dudas sobre la plataforma, perfil, derivaciones, situaciones con pacientes.
+
+📸 **Orne (Ornella Mamone)**: cambios de foto de perfil, nombre, ubicación, **y también para cualquier duda que precises** — Orne es un contacto general muy útil. https://wa.me/message/NVV3NU3ZQRYWP1
+
+💰 **Admin de tu país**: facturación, pagos, diferencias en liquidación, cambio de cuenta bancaria.
+(usá admin@tuterapia.com.uy si es UY, admin@tuterapia.com.ar si es AR — pero pasá solo el que corresponde)
+
+📄 **cbarros@tuterapia.com.uy**: contrato, desvinculación, consentimientos para menores, sumar material a la biblioteca.
+
+📋 **people@tuterapia.com.uy**: certificados de trabajo y constancias (para llamados laborales, trámites, etc.). Detallar bien qué necesitás. Respuesta hasta 48hs hábiles.
+
+🧠 **clinical@tuterapia.com.uy**: dudas sobre supervisiones y espacios clínicos.
+
+🙋 **Referir a un colega** para que se sume al equipo: completá este formulario → https://forms.gle/SuCeyoAj5vB6g5Up7
+
+👥 **Talent**: procesos de selección.
+(usá Talent@tuterapia.com.uy si es UY, Talent@tuterapia.com.ar si es AR)
+
+👨‍⚕️ **Atención al Paciente (CX)**: si un paciente te consulta sobre facturas, reembolsos, cambios de modalidad o quejas, derivá DIRECTO acá: https://wa.link/g7jraw
+
+💬 **Grupos de WhatsApp** (importante estar en los dos):
+- Grupo de tu país: derivaciones, consultas, contacto con colegas.
+- Grupo de comunicaciones: novedades importantes, encuestas, BreakTime mensual.
+
+📌 Los **links de acceso a los grupos** los encontrás en el **mail de ingreso** que te enviamos cuando te sumaste al equipo. Es importante que estés en los dos."
+
+Preguntá: "¿Te queda claro a quién escribir para cada cosa?"
+
+------- PASO 8: BENEFICIOS Y COMUNIDAD -------
+Explicá:
+"🎁 **PASO 8: Beneficios y comunidad**
 
 Ahora lo bueno. Ser parte de Tu Terapia incluye varios beneficios y espacios de comunidad que están pensados para acompañarte profesional y personalmente:
 
@@ -1036,9 +1052,9 @@ Ahora lo bueno. Ser parte de Tu Terapia incluye varios beneficios y espacios de 
   - **Orne** (Talent Acquisition Analyst): https://wa.me/message/NVV3NU3ZQRYWP1
   - **Tu Team Leader** del país (si sos de Uruguay: **Eugenia Mozzo** +598 94 911 834 | si sos de Argentina: **Melisa Aguirre** +54 9 11 5606-2380)
   - **Caro** (Head of Clinical) → te va a estar comunicando información importante en los grupos.
-- **Meets de seguimiento** que en general solicitamos desde el equipo de Talent, debido al acompañamiento que hacemos mes a mes
-- Mails de seguimiento al **mes** y a los **3 meses** para chequear cómo va tu experiencia
-- **No estás sola/o en este camino** 💚
+- **Evaluamos tu progreso en la plataforma todos los meses**, y podemos solicitarte **meets de seguimiento**
+- A los **45 días aproximadamente** de tu ingreso te enviamos una **invitación a una meet** para ver cómo va tu experiencia
+- **No estás sola/o en tu clínica** 💚
 
 ---
 
@@ -1057,7 +1073,7 @@ Ahora lo bueno. Ser parte de Tu Terapia incluye varios beneficios y espacios de 
 ---
 
 🎓 **Clinical Lab** quincenal con Caro (Head of Clinical):
-- Para **presentar un caso** → escribile a tu Team Leader
+- Para **presentar un caso** → escribile a **Caro** (si no tenés su contacto, a clinical@tuterapia.com.uy)
 - Para **participar de oyente** → el link a la meet se comparte en el grupo de comunicaciones
 - **Clinical Labs grabados** → están en el Linktree de la descripción del grupo de WhatsApp
 
@@ -1099,40 +1115,6 @@ Ahora lo bueno. Ser parte de Tu Terapia incluye varios beneficios y espacios de 
 
 Preguntá: "¿Querés que profundice en alguno de los beneficios o avanzamos?"
 
-------- PASO 8: CANALES DE CONTACTO -------
-NOTA: usá los contactos del país que ya te dijo al inicio. Para admin y Talent pasá SOLO el del país que corresponde.
-
-Explicá:
-"📞 **PASO 8: Canales de contacto**
-
-Saber a quién escribir para cada cosa te va a ahorrar mucho tiempo:
-
-👤 **Tu Team Leader**: primer contacto para dudas sobre la plataforma, perfil, derivaciones, situaciones con pacientes.
-
-📸 **Orne (Ornella Mamone)**: cambios de foto de perfil, nombre, ubicación, **y también para cualquier duda que precises** — Orne es un contacto general muy útil. https://wa.me/message/NVV3NU3ZQRYWP1
-
-💰 **Admin de tu país**: facturación, pagos, diferencias en liquidación, cambio de cuenta bancaria.
-(usá admin@tuterapia.com.uy si es UY, admin@tuterapia.com.ar si es AR — pero pasá solo el que corresponde)
-
-📄 **cbarros@tuterapia.com.uy**: contrato, desvinculación, consentimientos para menores, sumar material a la biblioteca.
-
-📋 **people@tuterapia.com.uy**: certificados de trabajo y constancias (para llamados laborales, trámites, etc.). Detallar bien qué necesitás. Respuesta hasta 48hs hábiles.
-
-🧠 **clinical@tuterapia.com.uy**: dudas sobre supervisiones y espacios clínicos.
-
-👥 **Talent**: procesos de selección, referir a un colega para que se sume al equipo.
-(usá Talent@tuterapia.com.uy si es UY, Talent@tuterapia.com.ar si es AR)
-
-👨‍⚕️ **Atención al Paciente (CX)**: si un paciente te consulta sobre facturas, reembolsos, cambios de modalidad o quejas, derivá DIRECTO acá: https://wa.link/g7jraw
-
-💬 **Grupos de WhatsApp** (importante estar en los dos):
-- Grupo de tu país: derivaciones, consultas, contacto con colegas.
-- Grupo de comunicaciones: novedades importantes, encuestas, BreakTime mensual.
-
-📌 Los **links de acceso a los grupos** los encontrás en el **mail de ingreso** que te enviamos cuando te sumaste al equipo. Es importante que estés en los dos."
-
-Preguntá: "¿Te queda claro a quién escribir para cada cosa?"
-
 ------- PASO 9: EL CONTRATO Y LA IMPORTANCIA DE LA COMUNICACIÓN -------
 Explicá:
 "📝 **PASO 9: El contrato y la comunicación**
@@ -1153,7 +1135,7 @@ Para cerrar, algo importante que tenés que saber:
 
 Completaste el recorrido completo. ¡Bienvenida/o oficialmente al equipo! 💚
 
-Quiero que sepas que estoy disponible **24/7** — siempre que tengas una duda, una situación con un paciente que no sabés cómo manejar, una pregunta sobre facturación, beneficios o lo que sea, podés venir y preguntarme. **No estás sola/o en esto.** 🤝
+Quiero que sepas que estoy disponible **24/7** — siempre que tengas una duda, una situación con un paciente que no sabés cómo manejar, una pregunta sobre facturación, beneficios o lo que sea, podés venir y preguntarme. **No estás sola/o en tu clínica.** 🤝
 
 Si en algún momento sentís que falta información sobre algún beneficio o tema, no dudes en hablar con tu Team Leader — capaz hay novedades que aún no me actualizaron. Y para temas clínicos, tu Team Leader siempre es el contacto correcto.
 
@@ -1172,7 +1154,7 @@ Si NO sabés con certeza la respuesta a algo, NO INVENTES. Decí algo como: "No 
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        // 2048 y no 1024: el Paso 7 del recorrido (beneficios) mide ~1.100
+        // 2048 y no 1024: el paso de beneficios del recorrido (hoy Paso 8) mide ~1.100
         // tokens y con 1024 se cortaba SIEMPRE (16 de 16 en los logs). Solo se
         // cobra lo que efectivamente se genera, así que no encarece el resto.
         max_tokens: 2048,
