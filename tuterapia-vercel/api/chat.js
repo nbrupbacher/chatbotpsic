@@ -113,6 +113,62 @@ async function registrarConversacion({ usuario, messages, reply, conversacionId,
   }
 }
 
+// ── SEGUIMIENTO DEL RECORRIDO GUIADO (Supabase) ────────────────
+// Cuando alguien arranca el recorrido desde el botón, el frontend le pide
+// nombre, mail y país y los manda en `onboarding` en cada request. Con eso,
+// más las marcas [[PASO:N]] y [[RECORRIDO:FIN]] que el modelo pone en sus
+// respuestas, registramos hasta dónde llegó cada persona en la tabla
+// onboarding_recorrido (vía la función onboarding_registrar, SECURITY DEFINER,
+// mismo esquema que chat_registrar). Si falla, el chat sigue igual.
+
+// Valida y recorta lo que manda el frontend. Devuelve null si no hay datos
+// mínimos (nombre y un mail con forma de mail).
+function limpiarOnboarding(o) {
+  if (!o || typeof o !== 'object') return null;
+  const nombre = typeof o.nombre === 'string' ? o.nombre.trim().slice(0, 120) : '';
+  const mail = typeof o.mail === 'string' ? o.mail.trim().toLowerCase().slice(0, 200) : '';
+  const pais = o.pais === 'UY' || o.pais === 'AR' ? o.pais : null;
+  if (!nombre || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return null;
+  return { nombre, mail, pais };
+}
+
+// Lee de la respuesta del modelo el paso más alto mostrado y si cerró.
+function leerMarcasRecorrido(reply) {
+  const pasos = [...String(reply).matchAll(/\[\[PASO:(\d)\]\]/g)].map(m => Number(m[1]));
+  return {
+    paso: pasos.length ? Math.max(...pasos) : 0,
+    completo: /\[\[RECORRIDO:FIN\]\]/.test(reply)
+  };
+}
+
+async function registrarRecorrido({ conversacionId, onboarding, reply }) {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_KEY;
+  if (!url || !key || !conversacionId || !onboarding) return;
+
+  const { paso, completo } = leerMarcasRecorrido(reply);
+
+  const headers = { 'Content-Type': 'application/json', apikey: key };
+  if (key.startsWith('eyJ')) headers.Authorization = `Bearer ${key}`;
+
+  const res = await fetch(`${url}/rest/v1/rpc/onboarding_registrar`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      p_conversacion_id: conversacionId,
+      p_nombre: onboarding.nombre,
+      p_mail: onboarding.mail,
+      p_pais: onboarding.pais,
+      p_paso: paso,
+      p_completo: completo
+    })
+  });
+
+  if (!res.ok) {
+    console.error('No se pudo registrar el recorrido:', await res.text());
+  }
+}
+
 export default async function handler(req, res) {
   // Solo aceptamos POST
   if (req.method !== 'POST') {
@@ -129,6 +185,7 @@ export default async function handler(req, res) {
 
   try {
     const { messages, conversationId } = req.body;
+    const onboarding = limpiarOnboarding(req.body.onboarding);
 
     // Solo aceptamos un id con forma razonable: es lo único de este payload que
     // termina agrupando filas, y no queremos basura en la columna.
@@ -440,7 +497,13 @@ No me llega el mail de notificación:
 - Si persiste, escribir al Team Leader.
 
 === SESIONES ONLINE - HERRAMIENTA ===
-Cada profesional usa la que prefiere. Recomendamos Google Meet (gratuito) o WhatsApp. Zoom es paga. El profesional crea el link y lo comparte con el paciente.
+Cada profesional usa la que prefiere. Recomendamos Google Meet (gratuito) o WhatsApp. Zoom es paga.
+
+LINK DE LA SESIÓN ONLINE — lo pone SIEMPRE el psicólogo (la plataforma no lo genera):
+- Una vez aprobada la sesión, el psicólogo crea el link (por ejemplo, de Google Meet) y se lo hace llegar al paciente de una de estas dos formas:
+  1. Mandándoselo por WhatsApp.
+  2. Agendando la sesión en su Google Calendar con Meet e invitando al paciente con su mail, así le llega la invitación con el link.
+- Próximamente: se va a poder conectar la agenda del perfil de Tu Terapia con Google Calendar. Si preguntan, contá que está por salir, pero NO des fechas ni expliques cómo se configura (todavía no está disponible).
 
 === PAREJA, FAMILIA, MENORES ===
 No hay botón específico de pago. Hay protocolos con equivalencia de sesiones:
@@ -654,11 +717,24 @@ Te voy a acompañar paso a paso para que conozcas tu nuevo perfil, le saques el 
 
 Antes de arrancar: ¿sos de Uruguay o de Argentina? Así te doy los datos correctos en los puntos que dependen del país."
 
+🔘 ARRANQUE DESDE EL BOTÓN DEL CHAT:
+El chat tiene un botón "Soy nuevo/a: empezar recorrido" que le pide a la persona su nombre, mail y país antes de arrancar. Cuando lo usa, su primer mensaje empieza con "[Recorrido]" e incluye su nombre y su país. En ese caso:
+- Usá su nombre en la bienvenida (solo el primer nombre) y NO le preguntes el país: ya lo sabés.
+- Si el mensaje dice que quiere RETOMAR y que ya hizo hasta el Paso N, saludalo por su nombre con un "¡Qué bueno verte de nuevo!" breve y arrancá directamente con el Paso N+1 (sin repetir la bienvenida ni la pregunta de inicio de sesión). Si N es 9, mandá directamente el CIERRE DEL RECORRIDO.
+- Si alguien dice que es nuevo/a o pide el recorrido pero su mensaje NO empieza con "[Recorrido]", respondé con una bienvenida muy breve (2 líneas), invitalo/a a tocar el botón de abajo para arrancar, y terminá tu mensaje con la marca [[BOTON_RECORRIDO]] en una línea aparte. NO arranques los pasos sin esos datos.
+
+🏷️ MARCAS TÉCNICAS (OBLIGATORIAS EN EL RECORRIDO):
+- Cada vez que empezás un paso, la PRIMERA línea de tu mensaje tiene que ser la marca [[PASO:N]] (N = número del paso, del 1 al 9), sola en esa línea. Ejemplo: [[PASO:1]]
+- Cuando mandás el CIERRE DEL RECORRIDO, la primera línea tiene que ser [[RECORRIDO:FIN]].
+- Si en un mismo mensaje seguís explicando el mismo paso (por ejemplo, respondiendo una duda), NO pongas la marca de nuevo.
+- Estas marcas las procesa la página (muestran la barra de progreso y los botones) y el psicólogo NO las ve. Nunca las menciones ni las expliques, y no las uses fuera del recorrido.
+- Si en algún paso de abajo aparece una marca [[VIDEO:link]], copiala tal cual en tu mensaje, en una línea aparte, donde corresponda: la página la convierte en un video que se reproduce dentro del chat.
+
 ⚠️ IMPORTANTE — MEMORIA ENTRE SESIONES:
-El asistente NO recuerda conversaciones de días anteriores cuando se cierra el navegador. Si el psicólogo retoma una nueva sesión diciendo "quedé en el paso X" o "seguimos donde estábamos" o "ayer hablamos", NO arranques desde cero. Preguntá directamente: "¡Hola de nuevo! Como cada conversación arranca de cero, ¿me decís en qué punto te quedaste? Así retomamos desde ahí."
+El asistente NO recuerda conversaciones anteriores. Si alguien escribe a mano "quedé en el paso X" o "seguimos donde estábamos" sin el botón, preguntá: "¡Hola de nuevo! ¿Me decís en qué punto te quedaste? Así retomamos desde ahí." Y cuando arranques ese paso, poné su marca [[PASO:N]] como siempre.
 
 PRIMERO: PREGUNTAR PAÍS (antes del Paso 1)
-Antes de arrancar con el contenido, si no sabés de qué país es, preguntá: "Antes de empezar, decime: ¿sos de Uruguay o Argentina? Así te doy los datos correctos en los puntos que dependen del país (facturación, pagos, contactos)."
+Antes de arrancar con el contenido, si no sabés de qué país es (si arrancó desde el botón ya lo sabés), preguntá: "Antes de empezar, decime: ¿sos de Uruguay o Argentina? Así te doy los datos correctos en los puntos que dependen del país (facturación, pagos, contactos)."
 Una vez que sepas el país, guardalo mentalmente y usalo en todos los pasos siguientes (especialmente Paso 6 y Paso 8) sin volver a preguntar.
 
 ANTES DEL PASO 1:
@@ -1056,7 +1132,10 @@ Si NO sabés con certeza la respuesta a algo, NO INVENTES. Decí algo como: "No 
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1024,
+        // 2048 y no 1024: el Paso 7 del recorrido (beneficios) mide ~1.100
+        // tokens y con 1024 se cortaba SIEMPRE (16 de 16 en los logs). Solo se
+        // cobra lo que efectivamente se genera, así que no encarece el resto.
+        max_tokens: 2048,
         // El system prompt son 18.440 tokens que se reenvían en CADA mensaje: es
         // el costo dominante del bot. Cacheado se cobra a ~0.1x mientras el
         // caché esté caliente, y cada lectura reinicia el reloj.
@@ -1105,6 +1184,14 @@ Si NO sabés con certeza la respuesta a algo, NO INVENTES. Decí algo como: "No 
       });
     } catch (err) {
       console.error('Fallo el registro de la conversación:', err);
+    }
+
+    if (onboarding) {
+      try {
+        await registrarRecorrido({ conversacionId, onboarding, reply });
+      } catch (err) {
+        console.error('Fallo el registro del recorrido:', err);
+      }
     }
 
     return res.status(200).json({ reply });
