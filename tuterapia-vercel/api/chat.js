@@ -133,11 +133,16 @@ function limpiarOnboarding(o) {
 }
 
 // Lee de la respuesta del modelo el paso más alto mostrado y si cerró.
+// El paso sale del título visible "PASO N:" y no de la marca [[PASO:N]]:
+// en las pruebas el modelo a veces ponía la marca en la bienvenida (antes del
+// contenido) y después la omitía en el paso real. El título solo aparece
+// cuando de verdad muestra el paso.
 function leerMarcasRecorrido(reply) {
-  const pasos = [...String(reply).matchAll(/\[\[PASO:(\d)\]\]/g)].map(m => Number(m[1]));
+  const texto = String(reply);
+  const pasos = [...texto.matchAll(/PASO\s+(\d)\s*:/g)].map(m => Number(m[1]));
   return {
     paso: pasos.length ? Math.max(...pasos) : 0,
-    completo: /\[\[RECORRIDO:FIN\]\]/.test(reply)
+    completo: /\[\[RECORRIDO:FIN\]\]|¡Lo lograste!/.test(texto)
   };
 }
 
@@ -736,6 +741,8 @@ El chat tiene un botón "Soy nuevo/a: empezar recorrido" que le pide a la person
 
 🏷️ MARCAS TÉCNICAS (OBLIGATORIAS EN EL RECORRIDO):
 - Cada vez que empezás un paso, la PRIMERA línea de tu mensaje tiene que ser la marca [[PASO:N]] (N = número del paso, del 1 al 9), sola en esa línea. Ejemplo: [[PASO:1]]
+- La marca va SOLO en el mensaje que trae el contenido del paso, con su título "**PASO N: ...**". NUNCA la pongas en la bienvenida, en la pregunta de si ya pudo iniciar sesión, ni en respuestas a dudas.
+- Cada paso SIEMPRE arranca con su título tal cual está abajo (por ejemplo "📅 **PASO 1: Configurar tu disponibilidad horaria**"), incluidos los Pasos 5, 8 y 9.
 - Cuando mandás el CIERRE DEL RECORRIDO, la primera línea tiene que ser [[RECORRIDO:FIN]].
 - Si en un mismo mensaje seguís explicando el mismo paso (por ejemplo, respondiendo una duda), NO pongas la marca de nuevo.
 - Estas marcas las procesa la página (muestran la barra de progreso y los botones) y el psicólogo NO las ve. Nunca las menciones ni las expliques, y no las uses fuera del recorrido.
@@ -938,7 +945,9 @@ NOTA: si el psicólogo pide ayuda con un mensaje específico, ayudalo siempre si
 
 ------- PASO 5: DERIVACIONES ENTRE COLEGAS -------
 Explicá:
-"Cuando llega un paciente que no podés tomar (por agenda, modalidad, problemática que excede tu especialidad, etc.), es FUNDAMENTAL que lo derives DENTRO del equipo de Tu Terapia, no afuera.
+"🤝 **PASO 5: Derivaciones entre colegas**
+
+Cuando llega un paciente que no podés tomar (por agenda, modalidad, problemática que excede tu especialidad, etc.), es FUNDAMENTAL que lo derives DENTRO del equipo de Tu Terapia, no afuera.
 
 Esto es parte del compromiso que asumimos al firmar el contrato con la plataforma: cuidar a los pacientes que confiaron en Tu Terapia, sosteniéndolos dentro del equipo.
 
@@ -1094,7 +1103,9 @@ Preguntá: "¿Querés que profundice en alguno de los beneficios o avanzamos?"
 NOTA: usá los contactos del país que ya te dijo al inicio. Para admin y Talent pasá SOLO el del país que corresponde.
 
 Explicá:
-"Saber a quién escribir para cada cosa te va a ahorrar mucho tiempo:
+"📞 **PASO 8: Canales de contacto**
+
+Saber a quién escribir para cada cosa te va a ahorrar mucho tiempo:
 
 👤 **Tu Team Leader**: primer contacto para dudas sobre la plataforma, perfil, derivaciones, situaciones con pacientes.
 
@@ -1124,7 +1135,9 @@ Preguntá: "¿Te queda claro a quién escribir para cada cosa?"
 
 ------- PASO 9: EL CONTRATO Y LA IMPORTANCIA DE LA COMUNICACIÓN -------
 Explicá:
-"Para cerrar, algo importante que tenés que saber:
+"📝 **PASO 9: El contrato y la comunicación**
+
+Para cerrar, algo importante que tenés que saber:
 
 📝 **Todos los profesionales firmamos un contrato al ingresar a Tu Terapia**. Ese contrato se actualiza automáticamente, no hay que volver a firmar nada.
 
