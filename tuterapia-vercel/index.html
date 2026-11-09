@@ -342,7 +342,9 @@ function urlVideoEmbebido(url) {
     return 'https://www.youtube-nocookie.com/embed/' + m[1];
   }
   if ((m = url.match(/loom\.com\/(?:share|embed)\/([\w-]+)/))) {
-    return 'https://www.loom.com/embed/' + m[1];
+    // t=0: que arranque siempre desde el principio (Loom recuerda dónde
+    // quedó cada persona y si no lo retoma desde ahí).
+    return 'https://www.loom.com/embed/' + m[1] + '?t=0&hideEmbedTopBar=true';
   }
   if ((m = url.match(/drive\.google\.com\/file\/d\/([\w-]+)/))) {
     return 'https://drive.google.com/file/d/' + m[1] + '/preview';
