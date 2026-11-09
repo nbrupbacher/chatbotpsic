@@ -424,8 +424,19 @@ function appendMessage(role, text, chips, imageDataUrl) {
   msg.appendChild(bubble);
   body.appendChild(msg);
 
-  // Show chips below bot message if provided
-  if (role === 'bot' && chips && chips.length > 0) {
+  if (role === 'bot') agregarChips(chips);
+
+  // Las respuestas del asistente pueden ser largas: mostramos su PRINCIPIO
+  // (si no, la persona cae al final del paso y tiene que subir).
+  if (role === 'bot') scrollToMessage(msg);
+  else scrollToBottom();
+  return msg;
+}
+
+// Botones de respuesta rápida debajo del último mensaje del asistente.
+function agregarChips(chips) {
+  const body = document.getElementById('chat-body');
+  if (chips && chips.length > 0) {
     const chipsDiv = document.createElement('div');
     chipsDiv.className = 'suggestions';
     chips.forEach(chip => {
@@ -445,12 +456,18 @@ function appendMessage(role, text, chips, imageDataUrl) {
     chipWrapper.appendChild(chipsDiv);
     body.appendChild(chipWrapper);
   }
+}
 
-  // Las respuestas del asistente pueden ser largas: mostramos su PRINCIPIO
-  // (si no, la persona cae al final del paso y tiene que subir).
-  if (role === 'bot') scrollToMessage(msg);
-  else scrollToBottom();
-  return msg;
+// Versión del render para el texto que todavía se está escribiendo: esconde
+// una marca a medio llegar ("[[PAS...") y muestra los videos como un aviso,
+// para no recargar el reproductor en cada pedacito. El video real aparece
+// cuando termina la respuesta (renderText).
+function renderTextParcial(text) {
+  return renderText(
+    String(text)
+      .replace(/\[\[[^\]\n]*\]?$/, '')
+      .replace(/\[\[VIDEO:\S+?\]\]/g, '🎥 Cargando video…')
+  );
 }
 
 // Lleva la vista al comienzo de un mensaje, debajo del header y la barra.
@@ -910,7 +927,8 @@ async function processQuery(text, image) {
         conversationId,
         onboarding: recorridoActivo
           ? { nombre: recorridoActivo.nombre, mail: recorridoActivo.mail, pais: recorridoActivo.pais }
-          : undefined
+          : undefined,
+        stream: true
       })
     });
     if (response.status === 401) {
@@ -920,13 +938,24 @@ async function processQuery(text, image) {
       handleLogout();
       return;
     }
-    const data = await response.json();
-    removeTyping();
-    if (!response.ok) throw new Error(data.error || 'Error API');
-    const reply = data.reply;
+
+    let reply, msgEl;
+    const esStream = (response.headers.get('Content-Type') || '').includes('ndjson');
+    if (response.ok && esStream) {
+      // La respuesta llega de a pedazos: mostramos el mensaje apenas llega el
+      // primero y lo vamos completando (sin mover la pantalla).
+      ({ reply, msgEl } = await leerRespuestaEnVivo(response));
+    } else {
+      const data = await response.json();
+      removeTyping();
+      if (!response.ok) throw new Error(data.error || 'Error API');
+      reply = data.reply;
+      msgEl = appendMessage('bot', reply, []);
+    }
+
     conversationHistory.push({ role: 'assistant', content: reply });
     const chips = procesarMarcasRecorrido(reply);
-    const msgEl = appendMessage('bot', reply, chips);
+    agregarChips(chips);
     // Recordamos dónde quedó cada paso para los puntitos de la barra, y
     // redibujamos la barra ahora que el mensaje existe.
     if (ultimoPasoMostrado && recorridoActivo) {
@@ -938,6 +967,58 @@ async function processQuery(text, image) {
     console.error(err);
     appendMessage('bot', '⚠️ Hubo un problema al conectarme. Intentá de nuevo en un momento. Si persiste, escribile a tu Team Leader.', []);
   }
+}
+
+// Lee la respuesta en NDJSON ({"t": pedazo} ... {"done": true}) y la va
+// mostrando. Devuelve el texto completo y el elemento del mensaje.
+async function leerRespuestaEnVivo(response) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let texto = '';
+  let error = null;
+  let msgEl = null;
+  let textDiv = null;
+  let ultimoDibujo = 0;
+
+  const dibujar = (final) => {
+    if (!textDiv) return;
+    textDiv.innerHTML = final ? renderText(texto) : renderTextParcial(texto);
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let corte;
+    while ((corte = buffer.indexOf('\n')) !== -1) {
+      const linea = buffer.slice(0, corte).trim();
+      buffer = buffer.slice(corte + 1);
+      if (!linea) continue;
+      let ev;
+      try { ev = JSON.parse(linea); } catch { continue; }
+      if (ev.error) error = ev.error;
+      if (typeof ev.t === 'string') {
+        texto += ev.t;
+        if (!msgEl && sacarMarcas(texto.replace(/\[\[[^\]\n]*\]?$/, '')).trim()) {
+          // Primer texto visible: sacamos los puntitos y creamos el mensaje.
+          removeTyping();
+          msgEl = appendMessage('bot', ' ', null);
+          textDiv = msgEl.querySelector('.msg-bubble > div');
+        }
+        const ahora = Date.now();
+        if (ahora - ultimoDibujo > 60) { dibujar(false); ultimoDibujo = ahora; }
+      }
+    }
+  }
+
+  if (!msgEl) {
+    removeTyping();
+    throw new Error(error || 'Respuesta vacía');
+  }
+  dibujar(true);
+  if (error) console.error('Error durante la respuesta:', error);
+  return { reply: texto, msgEl };
 }
 
 // Si ya hay token guardado, saltar el login (el backend validará si sigue vivo).
