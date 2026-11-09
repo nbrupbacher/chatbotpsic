@@ -721,8 +721,10 @@ function lanzarConfeti() {
 
 // Lee las marcas de la respuesta y devuelve los botones a mostrar.
 function procesarMarcasRecorrido(reply) {
-  const pasos = [...reply.matchAll(/\[\[PASO:(\d)\]\]/g)].map(m => Number(m[1]));
-  const fin = /\[\[RECORRIDO:FIN\]\]/.test(reply);
+  // El paso se toma del título visible "PASO N:" (más confiable que la marca,
+  // que el modelo a veces ponía en la bienvenida). Ver leerMarcasRecorrido en api/chat.js.
+  const pasos = [...reply.matchAll(/PASO\s+(\d)\s*:/g)].map(m => Number(m[1]));
+  const fin = /\[\[RECORRIDO:FIN\]\]|¡Lo lograste!/.test(reply);
   const pedirBoton = /\[\[BOTON_RECORRIDO\]\]/.test(reply);
 
   if (pedirBoton && !recorridoActivo) {
