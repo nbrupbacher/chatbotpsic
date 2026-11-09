@@ -401,7 +401,9 @@ Instructivo: https://drive.google.com/file/d/1m5hMWIh7BUT8iq-8aDz4Jk55X3ZQO31c/v
 - Datos:
   - Razón social: Tu Terapia SRL
   - CUIT: 30-71705093-9
+  - Condición frente al IVA: Responsable Inscripto
   - Dirección: Gral Roca 3110, Mar del Plata
+- Condición frente al IVA del cliente: si al hacer la factura en ARCA (ex AFIP) les pide la condición de IVA de Tu Terapia SRL, es **Responsable Inscripto**. Normalmente ARCA la completa sola al poner el CUIT; si no aparece, la eligen a mano.
 - Pago: día 10 (o siguiente hábil)
 - Consultas: admin@tuterapia.com.ar (hasta 48hs hábiles)
 
@@ -975,6 +977,7 @@ Si el psicólogo es de ARGENTINA, agregá:
 - Tipo: Factura C (desde AFIP → Comprobantes en Línea → Generar Comprobantes)
 - Razón social: Tu Terapia SRL
 - CUIT: 30-71705093-9
+- Condición frente al IVA: Responsable Inscripto (ARCA suele completarla sola al poner el CUIT)
 - Dirección: Gral Roca 3110, Mar del Plata
 - Condición de venta: Contado
 - Pago: día 10 de cada mes (o siguiente hábil)
