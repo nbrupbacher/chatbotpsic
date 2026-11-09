@@ -131,6 +131,45 @@ acompañaba.
 **Retención:** hoy no hay borrado automático. Conviene definir un plazo (por
 ejemplo 90 días) y programar la limpieza.
 
+### Recorrido guiado (onboarding)
+
+**Cómo funciona:** en la bienvenida hay un botón "Soy nuevo/a: empezar
+recorrido" que pide nombre, mail y país en un formulario del frontend. El primer
+mensaje al modelo empieza con `[Recorrido]` e incluye nombre y país (el mail NO
+va al modelo). En cada request el frontend manda `onboarding: {nombre, mail,
+pais}` y el backend lo registra en Supabase.
+
+**Marcas técnicas:** el system prompt le pide al modelo que empiece cada paso
+con `[[PASO:N]]` y el cierre con `[[RECORRIDO:FIN]]`. El frontend las oculta y
+las usa para la barra de progreso, los botones "Listo, siguiente paso" y el
+confeti. `[[BOTON_RECORRIDO]]` muestra el botón de arranque cuando alguien
+escribe "soy nueva" a mano.
+
+**Retomar:** el paso alcanzado se guarda en `localStorage` (`tt_recorrido_v1`),
+así que funciona en el mismo navegador/dispositivo.
+
+**Link directo:** `https://chatbotpsic.vercel.app/?recorrido` abre el formulario
+apenas la persona inicia sesión. Es el link para mandar en la bienvenida.
+
+**Videos:** para mostrar un video dentro del chat en un paso, agregar en ese
+paso del system prompt una línea `[[VIDEO:<link>]]` (YouTube, Loom o archivo de
+Drive). El modelo la copia y el frontend la convierte en reproductor.
+
+**Quién lo hizo:** tabla `onboarding_recorrido` (una fila por conversación),
+escrita solo por la función `onboarding_registrar` (SECURITY DEFINER, igual que
+`chat_registrar`). Para leer, desde el SQL Editor:
+
+```sql
+-- Una fila por persona, con lo más lejos que llegó
+select * from onboarding_por_persona order by ultima_actividad desc;
+
+-- Quiénes arrancaron y no terminaron (para hacerles seguimiento)
+select nombre, mail, pais, paso_max, ultima_actividad
+from onboarding_por_persona
+where not completo
+order by ultima_actividad desc;
+```
+
 ### Monitorear el costo y el caché
 
 El system prompt son **18.440 tokens** (medido) que se reenvían en cada mensaje,
