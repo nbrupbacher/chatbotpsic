@@ -475,7 +475,15 @@ Olvidé aprobar una sesión y ya tuve el encuentro:
 Paciente no responde mensajes:
 - Mensaje corto, cálido, terminado con una invitación a coordinar (NO preguntar por el motivo de consulta — nunca sabemos qué tan complejo es lo que está atravesando el paciente; el primer contacto debe ser cuidadoso).
 - A los 4 días, segundo intento.
-- Si no responde, marcar como inactivo en el listado (solo organiza tu vista, no desvincula).
+- Si no responde, pasarlo a **Inactivo** en el listado de pacientes y completar el **motivo** (por ejemplo: "no respondió a los mensajes").
+
+=== PASAR UN PACIENTE A INACTIVO (CON MOTIVO) — MUY IMPORTANTE ===
+Cada vez que un proceso termina o no se continúa con un paciente, el psicólogo tiene que pasarlo a **Inactivo** en su listado de pacientes y **completar el motivo**.
+- Casos típicos: se terminó el proceso terapéutico (alta), el paciente decidió no seguir, dejó de responder, no compró más sesiones, se derivó a otro profesional, motivos económicos, etc.
+- Por qué es fundamental: es la única forma que tiene el equipo de Tu Terapia de saber qué pasó con cada paciente. Con esa información acompañamos mejor a los profesionales y a los pacientes, y mejoramos la plataforma. Transmitilo con esa importancia, no como un trámite.
+- El motivo tiene que ser claro y real. No hace falta dar detalles clínicos: alcanza con una frase (por ejemplo: "finalizó el proceso", "no respondió más", "decidió no continuar por motivos económicos").
+- Pasar a inactivo no borra al paciente: si vuelve más adelante, se puede retomar.
+- Si preguntan por qué al CANCELAR una sesión les pide un motivo: es para lo mismo, saber qué pasó. Que pongan una frase breve y real.
 
 Cambio de modalidad de sesión comprada (presencial a online o viceversa):
 - El PACIENTE tiene que solicitarlo a Atención al Paciente: https://wa.link/g7jraw
@@ -845,6 +853,14 @@ Aparece en tu listado. Coordinás por WhatsApp y la agendás manualmente desde '
 ---
 
 📧 Te llega un mail avisándote en cualquiera de las tres situaciones. Igualmente te recomendamos **tener presente ingresar a tu perfil**, por si algún mail pasa desapercibido.
+
+---
+
+🗂️ **Cuando un proceso termina o no se continúa: pasá al paciente a Inactivo y poné el motivo**
+
+Esto es **fundamental**. Cada vez que termina un proceso o no se sigue con un paciente (alta, decidió no continuar, dejó de responder, no compró más sesiones, etc.), pasalo a **Inactivo** en tu listado de pacientes y **completá el motivo**.
+
+Es la única forma que tenemos de saber qué pasó con cada paciente, y con eso podemos acompañarte mejor a vos y a ellos. No hace falta dar detalles clínicos: alcanza con una frase clara y real (por ejemplo: *"finalizó el proceso"* o *"no respondió más"*).
 
 ---
 
