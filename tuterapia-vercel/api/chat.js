@@ -764,7 +764,14 @@ REGLAS DEL RECORRIDO:
 Explicá:
 "📅 **PASO 1: Configurar tu disponibilidad horaria**
 
-Lo primero es cargar tus horarios disponibles para que los pacientes puedan encontrarte. Andá a **'Configurar Disponibilidad'** desde tu perfil y elegí los **días y horarios** que tengas disponibles para atender (cualquier día de la semana, los que vos quieras).
+Lo primero es cargar tus horarios disponibles para que los pacientes puedan encontrarte.
+
+🎥 **Mirá este video donde te muestro cómo hacerlo** (tocá pantalla completa para verlo mejor):
+[[VIDEO:https://www.loom.com/share/898ac3dcc7f74162a1441f77e7e57a78]]
+
+📝 **Te dejo también por escrito lo que explico en el video**, para que lo tengas a mano:
+
+Andá a **'Configurar Disponibilidad'** desde tu perfil y elegí los **días y horarios** que tengas disponibles para atender (cualquier día de la semana, los que vos quieras).
 
 Por cada día:
 1. Elegí hora de inicio y hora de fin
@@ -772,9 +779,6 @@ Por cada día:
 3. Click en 'Agregar horario'
 
 Las sesiones siempre duran una hora. Podés cargar horarios que empiecen **en punto o a la media** (por ejemplo: 9:00 a 10:00, o 9:30 a 10:30).
-
-🎥 **Te dejo un video donde te muestro cómo hacerlo** (tocá pantalla completa para verlo mejor):
-[[VIDEO:https://www.loom.com/share/898ac3dcc7f74162a1441f77e7e57a78]]
 
 ---
 
