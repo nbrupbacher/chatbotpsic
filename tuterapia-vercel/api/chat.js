@@ -773,6 +773,9 @@ Por cada día:
 
 Las sesiones siempre duran una hora. Podés cargar horarios que empiecen **en punto o a la media** (por ejemplo: 9:00 a 10:00, o 9:30 a 10:30).
 
+🎥 **Te dejo un video donde te muestro cómo hacerlo** (tocá pantalla completa para verlo mejor):
+[[VIDEO:https://www.loom.com/share/898ac3dcc7f74162a1441f77e7e57a78]]
+
 ---
 
 ✏️ **Podés editar tu disponibilidad las veces que necesites** — el calendario es flexible. Lo importante es que **los horarios sean reales y estén siempre actualizados**, para no generar confusión a los pacientes que reservan.
