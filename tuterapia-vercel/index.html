@@ -144,13 +144,24 @@
   .progreso-texto { display:flex; justify-content:space-between; font-size:12.5px; color:var(--verde-medio); font-weight:600; margin-bottom:6px; }
   .progreso-barra { height:7px; background:rgba(117,183,129,0.18); border-radius:4px; overflow:hidden; }
   .progreso-relleno { height:100%; width:0; background:var(--verde-principal); border-radius:4px; transition:width .6s ease; }
+  .progreso-pasos { display:flex; justify-content:space-between; margin-top:8px; gap:2px; }
+  .paso-punto { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; background:none; border:none; padding:0; font-family:'Quicksand',sans-serif; cursor:default; min-width:0; }
+  .paso-punto .num { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; background:rgba(117,183,129,0.15); color:var(--gris); border:1.5px solid transparent; transition:all .2s; }
+  .paso-punto .txt { font-size:10px; color:var(--gris); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  .paso-punto.hecho .num { background:var(--verde-principal); color:white; }
+  .paso-punto.hecho .txt { color:var(--verde-medio); }
+  .paso-punto.actual .num { border-color:var(--verde-oscuro); }
+  .paso-punto.clickeable { cursor:pointer; }
+  .paso-punto.clickeable:hover .num { transform:scale(1.15); }
+  .paso-punto.clickeable:hover .txt { color:var(--verde-oscuro); text-decoration:underline; }
+  .msg.resaltado .msg-bubble { box-shadow:0 0 0 2px var(--verde-principal); transition:box-shadow .3s; }
   .video-chat { position:relative; width:min(440px, 68vw); aspect-ratio:16/9; margin:10px 0; border-radius:12px; overflow:hidden; background:#000; }
   .video-chat iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
   .confeti { position:fixed; top:-12px; width:9px; height:14px; z-index:200; pointer-events:none; border-radius:2px; animation:caer linear forwards; }
   @keyframes caer { to { transform:translateY(105vh) rotate(720deg); opacity:.9; } }
   @media (prefers-reduced-motion: reduce) { .confeti { display:none; } }
 
-  @media(max-width:600px) { .login-card { padding:32px 20px; } .chat-body { padding:14px 10px 20px; } .msg { max-width:95%; } .progreso { top:53px; } }
+  @media(max-width:600px) { .login-card { padding:32px 20px; } .chat-body { padding:14px 10px 20px; } .msg { max-width:95%; } .progreso { top:53px; } .paso-punto .txt { display:none; } }
 </style>
 </head>
 <body>
@@ -194,6 +205,7 @@
     <div class="progreso-inner">
       <div class="progreso-texto"><span id="progreso-paso">Recorrido de bienvenida</span><span id="progreso-pct"></span></div>
       <div class="progreso-barra"><div class="progreso-relleno" id="progreso-relleno"></div></div>
+      <div class="progreso-pasos" id="progreso-pasos"></div>
     </div>
   </div>
 
@@ -303,6 +315,7 @@ function handleLogout() {
   conversationHistory = [];
   conversationId = nuevoConversationId();
   recorridoActivo = null;
+  mensajesPorPaso = {};
   actualizarProgreso(null);
   // Restaurar mensaje de bienvenida
   document.getElementById('chat-body').innerHTML = '';
@@ -433,7 +446,20 @@ function appendMessage(role, text, chips, imageDataUrl) {
     body.appendChild(chipWrapper);
   }
 
-  scrollToBottom();
+  // Las respuestas del asistente pueden ser largas: mostramos su PRINCIPIO
+  // (si no, la persona cae al final del paso y tiene que subir).
+  if (role === 'bot') scrollToMessage(msg);
+  else scrollToBottom();
+  return msg;
+}
+
+// Lleva la vista al comienzo de un mensaje, debajo del header y la barra.
+function scrollToMessage(el) {
+  const header = document.querySelector('.chat-header');
+  const barra = document.getElementById('progreso');
+  const offset = header.offsetHeight + (barra.classList.contains('visible') ? barra.offsetHeight : 0) + 12;
+  const top = el.getBoundingClientRect().top + window.scrollY - offset;
+  window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
 }
 
 function showTyping() {
@@ -564,6 +590,12 @@ const TOTAL_PASOS = 9;
 const RECORRIDO_KEY = 'tt_recorrido_v1';
 const ATAJOS = ['¿Cuándo cobro?', '¿Cómo subo la factura?', 'Configurar mi disponibilidad', 'No puedo ingresar a mi perfil'];
 const CHIPS_PASO = ['Listo, siguiente paso 👉', 'Tengo una duda'];
+// Paso 3: los casos especiales (pareja, familia, menores) quedan como opcionales.
+const CHIPS_PASO_3 = ['Listo, siguiente paso 👉', 'Atiendo parejas, familias o menores', 'Tengo una duda'];
+// Títulos cortos para los puntitos de la barra (mismo orden que el prompt).
+const TITULOS_PASOS = ['Disponibilidad', 'Perfil', 'Pacientes', 'Comunicación', 'Derivaciones', 'Facturación', 'Contactos', 'Beneficios', 'Contrato'];
+// Mensaje del asistente donde se mostró cada paso en ESTA conversación.
+let mensajesPorPaso = {};
 
 // Datos del recorrido en curso en ESTA conversación (null si no hay).
 let recorridoActivo = null; // { nombre, mail, pais, paso, completo }
@@ -702,6 +734,37 @@ function actualizarProgreso(paso, completo) {
     ? '¡Recorrido completo! 🎉'
     : paso === 0 ? 'Recorrido de bienvenida' : 'Paso ' + paso + ' de ' + TOTAL_PASOS;
   document.getElementById('progreso-pct').textContent = pct + '%';
+  dibujarPuntos(paso, completo);
+}
+
+// Puntitos numerados con el título de cada paso. Los ya vistos en esta
+// conversación se pueden tocar para volver a esa parte del chat.
+function dibujarPuntos(paso, completo) {
+  const cont = document.getElementById('progreso-pasos');
+  cont.innerHTML = '';
+  TITULOS_PASOS.forEach((titulo, i) => {
+    const n = i + 1;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'paso-punto';
+    if (n <= paso || completo) b.classList.add('hecho');
+    if (n === paso && !completo) b.classList.add('actual');
+    const destino = mensajesPorPaso[n];
+    if (destino) {
+      b.classList.add('clickeable');
+      b.title = 'Ir al Paso ' + n + ': ' + titulo;
+      b.onclick = () => {
+        scrollToMessage(destino);
+        destino.classList.add('resaltado');
+        setTimeout(() => destino.classList.remove('resaltado'), 1600);
+      };
+    } else {
+      b.title = 'Paso ' + n + ': ' + titulo + (n <= paso ? ' (lo viste en una sesión anterior)' : '');
+      b.tabIndex = -1;
+    }
+    b.innerHTML = '<span class="num">' + n + '</span><span class="txt">' + titulo + '</span>';
+    cont.appendChild(b);
+  });
 }
 
 function lanzarConfeti() {
@@ -720,7 +783,10 @@ function lanzarConfeti() {
 }
 
 // Lee las marcas de la respuesta y devuelve los botones a mostrar.
+// Deja en ultimoPasoMostrado el paso que trae esta respuesta (o 0).
+let ultimoPasoMostrado = 0;
 function procesarMarcasRecorrido(reply) {
+  ultimoPasoMostrado = 0;
   // El paso se toma del título visible "PASO N:" (más confiable que la marca,
   // que el modelo a veces ponía en la bienvenida). Ver leerMarcasRecorrido en api/chat.js.
   const pasos = [...reply.matchAll(/PASO\s+(\d)\s*:/g)].map(m => Number(m[1]));
@@ -755,12 +821,12 @@ function procesarMarcasRecorrido(reply) {
 
   if (pasos.length) {
     const paso = Math.max(...pasos);
+    ultimoPasoMostrado = paso;
     if (paso > recorridoActivo.paso) {
       recorridoActivo.paso = paso;
       guardarRecorrido(recorridoActivo);
     }
-    actualizarProgreso(recorridoActivo.paso);
-    return CHIPS_PASO;
+    return paso === 3 ? CHIPS_PASO_3 : CHIPS_PASO;
   }
   // Respuesta dentro del recorrido sin paso nuevo (una duda, la bienvenida):
   // ofrecemos seguir solo si ya arrancó algún paso.
@@ -860,7 +926,13 @@ async function processQuery(text, image) {
     const reply = data.reply;
     conversationHistory.push({ role: 'assistant', content: reply });
     const chips = procesarMarcasRecorrido(reply);
-    appendMessage('bot', reply, chips);
+    const msgEl = appendMessage('bot', reply, chips);
+    // Recordamos dónde quedó cada paso para los puntitos de la barra, y
+    // redibujamos la barra ahora que el mensaje existe.
+    if (ultimoPasoMostrado && recorridoActivo) {
+      mensajesPorPaso[ultimoPasoMostrado] = msgEl;
+      actualizarProgreso(recorridoActivo.paso);
+    }
   } catch(err) {
     removeTyping();
     console.error(err);
