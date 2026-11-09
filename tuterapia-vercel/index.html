@@ -121,7 +121,36 @@
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
   @keyframes typingDot { 0%,100% { transform:translateY(0); opacity:0.4; } 50% { transform:translateY(-4px); opacity:1; } }
 
-  @media(max-width:600px) { .login-card { padding:32px 20px; } .chat-body { padding:14px 10px 20px; } .msg { max-width:95%; } }
+  /* Recorrido guiado: botón de entrada, atajos, formulario, progreso, video, confeti */
+  .welcome-actions { margin-top:20px; display:flex; flex-direction:column; gap:14px; text-align:left; }
+  .recorrido-cta { display:flex; align-items:center; gap:12px; width:100%; background:var(--verde-principal); color:white; border:none; border-radius:16px; padding:14px 16px; cursor:pointer; font-family:'Quicksand',sans-serif; text-align:left; box-shadow:0 4px 16px rgba(117,183,129,0.35); transition:transform .15s, box-shadow .15s; }
+  .recorrido-cta:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(117,183,129,0.45); }
+  .recorrido-cta .cta-icon { font-size:24px; line-height:1; }
+  .recorrido-cta .cta-title { display:block; font-size:15px; font-weight:600; }
+  .recorrido-cta .cta-sub { display:block; font-size:12.5px; opacity:.9; margin-top:2px; }
+  .recorrido-cta.secundario { background:var(--blanco); color:var(--verde-oscuro); border:1.5px solid var(--verde-principal); box-shadow:none; }
+  .atajos-label { font-size:12px; color:var(--gris); margin-bottom:-6px; }
+  .atajos { display:flex; flex-wrap:wrap; gap:7px; }
+  .recorrido-form { background:var(--blanco); border-radius:18px; border-bottom-left-radius:5px; box-shadow:0 2px 10px rgba(38,69,52,0.07); padding:16px; display:flex; flex-direction:column; gap:10px; width:100%; max-width:380px; color:var(--verde-oscuro); font-size:14px; }
+  .recorrido-form input, .recorrido-form select { width:100%; padding:10px 12px; border:1.5px solid #e2ded8; border-radius:10px; font-family:'Quicksand',sans-serif; font-size:14px; color:var(--verde-oscuro); background:white; }
+  .recorrido-form input:focus, .recorrido-form select:focus { outline:none; border-color:var(--verde-principal); }
+  .recorrido-form .form-nota { font-size:12px; color:var(--gris); line-height:1.5; }
+  .recorrido-form .form-error { font-size:12.5px; color:#b3412f; display:none; }
+  .recorrido-form button { padding:11px; background:var(--verde-principal); color:white; border:none; border-radius:10px; font-family:'Quicksand',sans-serif; font-size:14.5px; font-weight:600; cursor:pointer; }
+  .recorrido-form button:hover { background:var(--verde-medio); }
+  .progreso { display:none; position:sticky; top:55px; z-index:9; background:var(--crema); padding:10px 16px 8px; border-bottom:1px solid rgba(117,183,129,0.15); }
+  .progreso.visible { display:block; }
+  .progreso-inner { max-width:720px; margin:0 auto; }
+  .progreso-texto { display:flex; justify-content:space-between; font-size:12.5px; color:var(--verde-medio); font-weight:600; margin-bottom:6px; }
+  .progreso-barra { height:7px; background:rgba(117,183,129,0.18); border-radius:4px; overflow:hidden; }
+  .progreso-relleno { height:100%; width:0; background:var(--verde-principal); border-radius:4px; transition:width .6s ease; }
+  .video-chat { position:relative; width:min(440px, 68vw); aspect-ratio:16/9; margin:10px 0; border-radius:12px; overflow:hidden; background:#000; }
+  .video-chat iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
+  .confeti { position:fixed; top:-12px; width:9px; height:14px; z-index:200; pointer-events:none; border-radius:2px; animation:caer linear forwards; }
+  @keyframes caer { to { transform:translateY(105vh) rotate(720deg); opacity:.9; } }
+  @media (prefers-reduced-motion: reduce) { .confeti { display:none; } }
+
+  @media(max-width:600px) { .login-card { padding:32px 20px; } .chat-body { padding:14px 10px 20px; } .msg { max-width:95%; } .progreso { top:53px; } }
 </style>
 </head>
 <body>
@@ -161,12 +190,14 @@
     <button class="logout-btn" onclick="handleLogout()">Salir</button>
   </header>
 
-  <div class="chat-body" id="chat-body">
-    <div class="welcome-msg">
-      <h2 class="welcome-title">¡Hola! ¿En qué te ayudo? 👋</h2>
-      <p class="welcome-sub">Podés preguntarme sobre la plataforma, pacientes, facturación, beneficios y más.</p>
+  <div class="progreso" id="progreso">
+    <div class="progreso-inner">
+      <div class="progreso-texto"><span id="progreso-paso">Recorrido de bienvenida</span><span id="progreso-pct"></span></div>
+      <div class="progreso-barra"><div class="progreso-relleno" id="progreso-relleno"></div></div>
     </div>
   </div>
+
+  <div class="chat-body" id="chat-body"></div>
 
   <div class="chat-input-area">
     <!-- Preview de imagen adjunta -->
@@ -254,6 +285,13 @@ function showChat() {
   const chat = document.getElementById('chat-screen');
   chat.style.display = 'flex';
   chat.style.flexDirection = 'column';
+  const body = document.getElementById('chat-body');
+  if (!body.children.length) renderWelcome();
+  // Link directo al recorrido (?recorrido): abre el formulario apenas entra.
+  if (abrirRecorridoAlEntrar && !conversationHistory.length) {
+    abrirRecorridoAlEntrar = false;
+    iniciarRecorrido();
+  }
 }
 
 function handleLogout() {
@@ -264,17 +302,20 @@ function handleLogout() {
   document.getElementById('login-pass').value = '';
   conversationHistory = [];
   conversationId = nuevoConversationId();
+  recorridoActivo = null;
+  actualizarProgreso(null);
   // Restaurar mensaje de bienvenida
-  const body = document.getElementById('chat-body');
-  body.innerHTML = `<div class="welcome-msg"><h2 class="welcome-title">¡Hola! ¿En qué te ayudo? 👋</h2><p class="welcome-sub">Podés preguntarme sobre la plataforma, pacientes, facturación, beneficios y más.</p></div>`;
+  document.getElementById('chat-body').innerHTML = '';
+  renderWelcome();
 }
 
 document.getElementById('login-pass').addEventListener('keydown', e => {
   if (e.key === 'Enter') handleLogin();
 });
 
-// Si ya hay token guardado, saltar el login (el backend validará si sigue vivo)
-if (getToken()) showChat();
+// Link directo al recorrido: chatbotpsic.vercel.app/?recorrido
+// Se recuerda hasta después del login.
+let abrirRecorridoAlEntrar = new URLSearchParams(location.search).has('recorrido');
 
 // ── CHAT ──────────────────────────────────────────────────────
 function autoResize(el) {
@@ -289,13 +330,48 @@ function handleKeyDown(e) {
 function scrollToBottom() {
   const body = document.getElementById('chat-body');
   body.scrollTop = body.scrollHeight;
+  // El que scrollea en realidad es la página (chat-body crece con el contenido).
+  window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+}
+
+// Videos dentro del chat: el asistente escribe [[VIDEO:link]] y acá se
+// convierte en un reproductor. Acepta YouTube, Loom y archivos de Drive.
+function urlVideoEmbebido(url) {
+  let m;
+  if ((m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/|youtube\.com\/embed\/)([\w-]{6,})/))) {
+    return 'https://www.youtube-nocookie.com/embed/' + m[1];
+  }
+  if ((m = url.match(/loom\.com\/(?:share|embed)\/([\w-]+)/))) {
+    return 'https://www.loom.com/embed/' + m[1];
+  }
+  if ((m = url.match(/drive\.google\.com\/file\/d\/([\w-]+)/))) {
+    return 'https://drive.google.com/file/d/' + m[1] + '/preview';
+  }
+  return null;
+}
+
+// Saca del texto las marcas técnicas del recorrido (no se muestran).
+function sacarMarcas(text) {
+  return String(text)
+    .replace(/^[ \t]*\[\[(?:PASO:\d|RECORRIDO:FIN|BOTON_RECORRIDO)\]\][ \t]*\n?/gm, '')
+    .replace(/\[\[(?:PASO:\d|RECORRIDO:FIN|BOTON_RECORRIDO)\]\]/g, '')
+    .trim();
 }
 
 function renderText(text) {
+  const videos = [];
+  text = sacarMarcas(text).replace(/\[\[VIDEO:(\S+?)\]\]/g, (_, url) => {
+    const src = urlVideoEmbebido(url);
+    if (!src) return url;
+    videos.push(src);
+    return '%%VIDEO' + (videos.length - 1) + '%%';
+  });
   return text
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n/g, '<br>')
-    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')
+    .replace(/(?:<br>)?%%VIDEO(\d+)%%(?:<br>)?/g, (_, i) =>
+      '<div class="video-chat"><iframe src="' + videos[i] + '" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy" title="Video"></iframe></div>');
 }
 
 function appendMessage(role, text, chips, imageDataUrl) {
@@ -477,9 +553,225 @@ function openImageModal(dataUrl) {
   modal.classList.add('visible');
 }
 
+// ── RECORRIDO GUIADO ──────────────────────────────────────────
+// Botón de entrada, formulario (nombre, mail, país), barra de progreso,
+// botones para avanzar, confeti al terminar y "retomar donde quedaste".
+// El progreso se recuerda en este navegador (localStorage); además el backend
+// lo registra en Supabase (tabla onboarding_recorrido) con nombre y mail.
+const TOTAL_PASOS = 9;
+const RECORRIDO_KEY = 'tt_recorrido_v1';
+const ATAJOS = ['¿Cuándo cobro?', '¿Cómo subo la factura?', 'Configurar mi disponibilidad', 'No puedo ingresar a mi perfil'];
+const CHIPS_PASO = ['Listo, siguiente paso 👉', 'Tengo una duda'];
+
+// Datos del recorrido en curso en ESTA conversación (null si no hay).
+let recorridoActivo = null; // { nombre, mail, pais, paso, completo }
+
+function leerRecorridoGuardado() {
+  try { return JSON.parse(localStorage.getItem(RECORRIDO_KEY)) || null; } catch { return null; }
+}
+function guardarRecorrido(r) {
+  try { localStorage.setItem(RECORRIDO_KEY, JSON.stringify(r)); } catch {}
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+function primerNombre(n) { return String(n || '').trim().split(/\s+/)[0]; }
+
+function renderWelcome() {
+  const body = document.getElementById('chat-body');
+  const guardado = leerRecorridoGuardado();
+  const aMedias = guardado && !guardado.completo && guardado.paso > 0;
+
+  const welcome = document.createElement('div');
+  welcome.className = 'welcome-msg';
+  welcome.innerHTML =
+    '<h2 class="welcome-title">¡Hola' + (aMedias ? ', ' + escapeHtml(primerNombre(guardado.nombre)) : '') + '! ¿En qué te ayudo? 👋</h2>' +
+    '<p class="welcome-sub">Podés preguntarme sobre la plataforma, pacientes, facturación, beneficios y más.</p>' +
+    '<div class="welcome-actions"></div>';
+  const actions = welcome.querySelector('.welcome-actions');
+
+  if (aMedias) {
+    actions.appendChild(botonCta('🌱', 'Seguir mi recorrido desde el Paso ' + Math.min(guardado.paso + 1, TOTAL_PASOS),
+      'Ya hiciste ' + guardado.paso + ' de ' + TOTAL_PASOS + ' pasos', () => retomarRecorrido(guardado)));
+    actions.appendChild(botonCta('🔄', 'Empezar el recorrido de nuevo', 'Desde el principio', iniciarRecorrido, true));
+  } else {
+    actions.appendChild(botonCta('🌱', 'Soy nuevo/a: empezar recorrido',
+      '9 pasos · entre 15 y 20 minutos · podés pausar cuando quieras', iniciarRecorrido));
+  }
+
+  const label = document.createElement('div');
+  label.className = 'atajos-label';
+  label.textContent = 'Lo más consultado';
+  actions.appendChild(label);
+
+  const atajos = document.createElement('div');
+  atajos.className = 'atajos';
+  ATAJOS.forEach(t => {
+    const b = document.createElement('button');
+    b.className = 'suggestion-chip';
+    b.textContent = t;
+    b.onclick = () => sendText(t);
+    atajos.appendChild(b);
+  });
+  actions.appendChild(atajos);
+  body.appendChild(welcome);
+}
+
+function botonCta(icono, titulo, sub, onClick, secundario) {
+  const b = document.createElement('button');
+  b.className = 'recorrido-cta' + (secundario ? ' secundario' : '');
+  b.innerHTML = '<span class="cta-icon">' + icono + '</span><span><span class="cta-title">' +
+    escapeHtml(titulo) + '</span><span class="cta-sub">' + escapeHtml(sub) + '</span></span>';
+  b.onclick = onClick;
+  return b;
+}
+
+// Muestra el formulario de nombre, mail y país como un mensaje del asistente.
+function iniciarRecorrido() {
+  const body = document.getElementById('chat-body');
+  const welcome = body.querySelector('.welcome-msg');
+  if (welcome) welcome.remove();
+  if (document.getElementById('recorrido-form')) return;
+
+  const guardado = leerRecorridoGuardado() || {};
+  const wrap = document.createElement('div');
+  wrap.className = 'msg bot';
+  wrap.innerHTML =
+    '<div class="msg-avatar">✦</div>' +
+    '<form class="recorrido-form" id="recorrido-form" novalidate>' +
+      '<div><strong>¡Qué alegría que te sumes! 💚</strong><br>Antes de arrancar, contame un poquito de vos:</div>' +
+      '<input id="rf-nombre" placeholder="Tu nombre" autocomplete="name" value="' + escapeHtml(guardado.nombre || '') + '">' +
+      '<input id="rf-mail" type="email" placeholder="El mail con el que te registraste" autocomplete="email" value="' + escapeHtml(guardado.mail || '') + '">' +
+      '<select id="rf-pais">' +
+        '<option value="">¿Desde qué país atendés?</option>' +
+        '<option value="UY"' + (guardado.pais === 'UY' ? ' selected' : '') + '>Uruguay</option>' +
+        '<option value="AR"' + (guardado.pais === 'AR' ? ' selected' : '') + '>Argentina</option>' +
+      '</select>' +
+      '<div class="form-error" id="rf-error"></div>' +
+      '<button type="submit">Empezar recorrido 🌱</button>' +
+      '<div class="form-nota">Usamos estos datos solo para acompañarte en tu ingreso.</div>' +
+    '</form>';
+  body.appendChild(wrap);
+  scrollToBottom();
+  document.getElementById('rf-nombre').focus();
+
+  document.getElementById('recorrido-form').onsubmit = (e) => {
+    e.preventDefault();
+    const nombre = document.getElementById('rf-nombre').value.trim();
+    const mail = document.getElementById('rf-mail').value.trim().toLowerCase();
+    const pais = document.getElementById('rf-pais').value;
+    const err = document.getElementById('rf-error');
+    let msg = '';
+    if (!nombre) msg = 'Contanos tu nombre.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) msg = 'Revisá el mail, parece que le falta algo.';
+    else if (!pais) msg = 'Elegí tu país.';
+    if (msg) { err.textContent = msg; err.style.display = 'block'; return; }
+
+    wrap.remove();
+    recorridoActivo = { nombre, mail, pais, paso: 0, completo: false };
+    guardarRecorrido(recorridoActivo);
+    actualizarProgreso(0);
+    const paisTexto = pais === 'UY' ? 'Uruguay' : 'Argentina';
+    sendText('[Recorrido] Hola, soy nuevo/a y quiero hacer el recorrido. Me llamo ' + nombre + ' y soy de ' + paisTexto + '.',
+      null, 'Soy nuevo/a, quiero empezar el recorrido 🌱');
+  };
+}
+
+function retomarRecorrido(guardado) {
+  recorridoActivo = { ...guardado };
+  actualizarProgreso(guardado.paso);
+  const paisTexto = guardado.pais === 'UY' ? 'Uruguay' : 'Argentina';
+  sendText('[Recorrido] Quiero retomar el recorrido. Ya hice hasta el Paso ' + guardado.paso + '. Me llamo ' +
+    guardado.nombre + ' y soy de ' + paisTexto + '.', null,
+    'Quiero seguir mi recorrido desde el Paso ' + Math.min(guardado.paso + 1, TOTAL_PASOS));
+}
+
+// paso: null oculta la barra; 0..9 la muestra.
+function actualizarProgreso(paso, completo) {
+  const barra = document.getElementById('progreso');
+  if (paso === null || paso === undefined) { barra.classList.remove('visible'); return; }
+  barra.classList.add('visible');
+  // Pegada justo abajo del header (en celular el header es más alto).
+  barra.style.top = document.querySelector('.chat-header').offsetHeight + 'px';
+  const pct = completo ? 100 : Math.round((paso / TOTAL_PASOS) * 100);
+  document.getElementById('progreso-relleno').style.width = pct + '%';
+  document.getElementById('progreso-paso').textContent = completo
+    ? '¡Recorrido completo! 🎉'
+    : paso === 0 ? 'Recorrido de bienvenida' : 'Paso ' + paso + ' de ' + TOTAL_PASOS;
+  document.getElementById('progreso-pct').textContent = pct + '%';
+}
+
+function lanzarConfeti() {
+  const colores = ['#75B781', '#F29683', '#007271', '#213E6E', '#F6C85F', '#5A7968'];
+  for (let i = 0; i < 120; i++) {
+    const p = document.createElement('div');
+    p.className = 'confeti';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = colores[i % colores.length];
+    p.style.animationDuration = (2.2 + Math.random() * 2) + 's';
+    p.style.animationDelay = (Math.random() * 0.6) + 's';
+    p.style.transform = 'rotate(' + Math.random() * 360 + 'deg)';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 5000);
+  }
+}
+
+// Lee las marcas de la respuesta y devuelve los botones a mostrar.
+function procesarMarcasRecorrido(reply) {
+  const pasos = [...reply.matchAll(/\[\[PASO:(\d)\]\]/g)].map(m => Number(m[1]));
+  const fin = /\[\[RECORRIDO:FIN\]\]/.test(reply);
+  const pedirBoton = /\[\[BOTON_RECORRIDO\]\]/.test(reply);
+
+  if (pedirBoton && !recorridoActivo) {
+    setTimeout(() => {
+      const body = document.getElementById('chat-body');
+      const wrap = document.createElement('div');
+      wrap.className = 'msg bot';
+      wrap.style.paddingLeft = '42px';
+      const b = botonCta('🌱', 'Empezar recorrido', '9 pasos · entre 15 y 20 minutos', () => { wrap.remove(); iniciarRecorrido(); });
+      b.style.maxWidth = '380px';
+      wrap.appendChild(b);
+      body.appendChild(wrap);
+      scrollToBottom();
+    }, 0);
+    return [];
+  }
+
+  if (!recorridoActivo) return [];
+
+  if (fin) {
+    recorridoActivo.paso = TOTAL_PASOS;
+    recorridoActivo.completo = true;
+    guardarRecorrido(recorridoActivo);
+    actualizarProgreso(TOTAL_PASOS, true);
+    lanzarConfeti();
+    return [];
+  }
+
+  if (pasos.length) {
+    const paso = Math.max(...pasos);
+    if (paso > recorridoActivo.paso) {
+      recorridoActivo.paso = paso;
+      guardarRecorrido(recorridoActivo);
+    }
+    actualizarProgreso(recorridoActivo.paso);
+    return CHIPS_PASO;
+  }
+  // Respuesta dentro del recorrido sin paso nuevo (una duda, la bienvenida):
+  // ofrecemos seguir solo si ya arrancó algún paso.
+  return recorridoActivo.paso > 0 ? ['Listo, siguiente paso 👉'] : [];
+}
+
 // ── ENVÍO DE MENSAJES ─────────────────────────────────────────
-function sendText(text, image) {
-  appendMessage('user', text, null, image ? image.dataUrl : null);
+// displayText: lo que se ve en la burbuja si es distinto de lo que se manda.
+function sendText(text, image, displayText) {
+  // Los botones de respuestas anteriores ya no aplican: los sacamos.
+  document.querySelectorAll('#chat-body .suggestions').forEach(el => {
+    const fila = el.closest('.msg');
+    (fila || el).remove();
+  });
+  appendMessage('user', displayText || text, null, image ? image.dataUrl : null);
   processQuery(text, image);
 }
 
@@ -543,7 +835,13 @@ async function processQuery(text, image) {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + (getToken() || '')
       },
-      body: JSON.stringify({ messages: conversationHistory, conversationId })
+      body: JSON.stringify({
+        messages: conversationHistory,
+        conversationId,
+        onboarding: recorridoActivo
+          ? { nombre: recorridoActivo.nombre, mail: recorridoActivo.mail, pais: recorridoActivo.pais }
+          : undefined
+      })
     });
     if (response.status === 401) {
       // Token vencido o inválido → forzar re-login
@@ -557,13 +855,18 @@ async function processQuery(text, image) {
     if (!response.ok) throw new Error(data.error || 'Error API');
     const reply = data.reply;
     conversationHistory.push({ role: 'assistant', content: reply });
-    appendMessage('bot', reply, []);
+    const chips = procesarMarcasRecorrido(reply);
+    appendMessage('bot', reply, chips);
   } catch(err) {
     removeTyping();
     console.error(err);
     appendMessage('bot', '⚠️ Hubo un problema al conectarme. Intentá de nuevo en un momento. Si persiste, escribile a tu Team Leader.', []);
   }
 }
+
+// Si ya hay token guardado, saltar el login (el backend validará si sigue vivo).
+// Va al final para que todo lo que usa showChat ya esté definido.
+if (getToken()) showChat();
 </script>
 </body>
 </html>
