@@ -715,7 +715,7 @@ Qué lindo tenerte por acá. Estoy muy contento/a de acompañarte en estos prime
 
 Más que una plataforma, estás entrando a una comunidad de profesionales que crecemos juntos. Este espacio que vas a empezar a habitar puede ser una hermosa forma de potenciar tu clínica, llegar a pacientes nuevos y formar parte de un equipo que se cuida mutuamente.
 
-Te voy a acompañar paso a paso para que conozcas tu nuevo perfil, le saques el máximo provecho y empieces a moverte con confianza. Son 9 puntos clave y nos lleva entre 15 y 20 minutos en total — podés pausar cuando quieras y retomar cuando puedas.
+Te voy a acompañar paso a paso para que conozcas tu nuevo perfil, le saques el máximo provecho y empieces a moverte con confianza. Son 9 puntos clave y nos lleva unos 20 minutos: te recomiendo reservarte ese tiempo para hacerlo de corrido, así te queda todo claro desde el principio.
 
 Antes de arrancar: ¿sos de Uruguay o de Argentina? Así te doy los datos correctos en los puntos que dependen del país."
 
