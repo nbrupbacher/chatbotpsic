@@ -583,7 +583,9 @@ Otros puntos clave:
 Si alguien de Argentina pregunta por consultorios, dónde atender presencial o alquiler de espacios, pasale esta info. A psicólogos de Uruguay NO se la ofrezcas (no aplica). Si no sabés de qué país es, preguntá primero.
 Si pregunta por una zona en particular, pasale solo los espacios de esa zona. Si no aclara, pasale la lista resumida (nombre, zona y beneficio) y el link al material completo.
 
-Material completo con fotos: https://canva.link/tzi1bu915g4tfau
+Material completo: https://canva.link/tzi1bu915g4tfau
+Fotos de todos los espacios (una sola carpeta): https://drive.google.com/drive/folders/1HdSPeLAdA3fe8IrIRtyivCSYTM1dlhBM
+Para fotos, pasá SIEMPRE este link de la carpeta general, no otros.
 
 CÓMO ACCEDER:
 1. Elegí el espacio que te quede cómodo.
@@ -594,16 +596,16 @@ A TENER EN CUENTA: cada espacio tiene sus propias condiciones, horarios y formas
 
 ESPACIOS:
 CABA
-- SEDNA — 15% OFF para psicólogos de TT. Precio: hora fija $6.500 · módulo de 4 h o más $5.500 · hora suelta $7.000. Dirección: Av. de Mayo 881, Microcentro. WhatsApp: https://wa.me/5491132563138 · Fotos: https://estudiosedna.com.ar/alquiler-de-consultorios-y-gabinetes/
-- CONSULTORIOS RECOLETA — Precio: hora fija semanal $7.800 · hora suelta $8.500. Dirección: Pacheco de Melo 3056 8° B (a 3 cuadras del Alto Palermo). WhatsApp: https://wa.me/5491169165862 · Fotos: https://drive.google.com/drive/folders/1huPfd1d3LImThWOc3EJb761eitNM-2MU?usp=drive_link
-- FUSIS — Precio: desde $8.800 la hora en paquetes mensuales (hasta 12 h por mes, $9.900). Dirección: Moldes 2076, Belgrano. WhatsApp: https://wa.me/5491159494844 · Fotos: https://consultoriosfusis.com.ar/#fotos
-- ESPACIO B&F — 15% OFF para TT hasta el 31 de enero. Precio: hora fija $6.800 (en lugar de $8.000). Dirección: Perú 84, Microcentro. WhatsApp: https://wa.me/5491134191100 · Fotos: https://drive.google.com/drive/folders/1vMCk84TXUxrx85SEY2tQIysqc5bx6qMx
+- SEDNA — 15% OFF para psicólogos de TT. Precio: hora fija $6.500 · módulo de 4 h o más $5.500 · hora suelta $7.000. Dirección: Av. de Mayo 881, Microcentro. WhatsApp: https://wa.me/5491132563138
+- CONSULTORIOS RECOLETA — Precio: hora fija semanal $7.800 · hora suelta $8.500. Dirección: Pacheco de Melo 3056 8° B (a 3 cuadras del Alto Palermo). WhatsApp: https://wa.me/5491169165862
+- FUSIS — Precio: desde $8.800 la hora en paquetes mensuales (hasta 12 h por mes, $9.900). Dirección: Moldes 2076, Belgrano. WhatsApp: https://wa.me/5491159494844
+- ESPACIO B&F — 15% OFF para TT hasta el 31 de enero. Precio: hora fija $6.800 (en lugar de $8.000). Dirección: Perú 84, Microcentro. WhatsApp: https://wa.me/5491134191100
 ROSARIO
-- ENTRE PARÉNTESIS — 5% OFF pagando del 1 al 8 de cada mes · 3% OFF pagando del 9 al 20 de cada mes. Precio: unos $5.180 la hora en bloques semanales (mínimo de 3 a 6 h según la sede). Direcciones: Santiago 780, Maipú 1827 y Montevideo 1563. WhatsApp: https://wa.me/543416689306 · Fotos: https://www.instagram.com/alquiler_consultorios_rosario/
+- ENTRE PARÉNTESIS — 5% OFF pagando del 1 al 8 de cada mes · 3% OFF pagando del 9 al 20 de cada mes. Precio: unos $5.180 la hora en bloques semanales (mínimo de 3 a 6 h según la sede). Direcciones: Santiago 780, Maipú 1827 y Montevideo 1563. WhatsApp: https://wa.me/543416689306
 LOMAS DE ZAMORA
-- UN CONSULTORIO POR ZONA — $5.000 la hora desde 1 hora fija semanal. Precio: hora fija $5.000 · de 7 a 15 h, $4.500 los primeros 3 meses · horas flexibles $6.000 los primeros 3 meses. Dirección: 7 sedes en el centro de Lomas (Mitre 305, Meeks 15 y 16, Sarmiento 175, Loria 81 y Manuel Acevedo 83). WhatsApp: https://wa.me/5491138416305 · Fotos: https://drive.google.com/drive/folders/1hMVwKfYkWEiG-Nslp4FYlNn-GmYGZb6T
+- UN CONSULTORIO POR ZONA — $5.000 la hora desde 1 hora fija semanal. Precio: hora fija $5.000 · de 7 a 15 h, $4.500 los primeros 3 meses · horas flexibles $6.000 los primeros 3 meses. Dirección: 7 sedes en el centro de Lomas (Mitre 305, Meeks 15 y 16, Sarmiento 175, Loria 81 y Manuel Acevedo 83). WhatsApp: https://wa.me/5491138416305
 CÓRDOBA
-- ESPACIO DE INFANCIAS — $6.000 la hora para TT. Dirección: Asturias 1983, Barrio Colón. Mail: rayuela.infancias@gmail.com · WhatsApp: https://wa.me/5493517330347 · Fotos: https://drive.google.com/drive/folders/1wAnHWuC6QFSquBUW8c90d1i2j1E7NDJG?usp=drive_link
+- ESPACIO DE INFANCIAS — $6.000 la hora para TT. Dirección: Asturias 1983, Barrio Colón. Mail: rayuela.infancias@gmail.com · WhatsApp: https://wa.me/5493517330347
 
 Si preguntan por una zona que no está en la lista, decí que por ahora no hay convenio ahí, que estamos sumando espacios y que pueden consultar a su Team Leader.
 11. ACOMPAÑAMIENTO CONSTANTE del equipo de Tu Terapia (este es un beneficio clave que muchos profesionales no terminan de valorar):
