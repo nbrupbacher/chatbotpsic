@@ -141,6 +141,22 @@
   .recorrido-form .form-error { font-size:12.5px; color:#b3412f; display:none; }
   .recorrido-form button { padding:11px; background:var(--verde-principal); color:white; border:none; border-radius:10px; font-family:'Quicksand',sans-serif; font-size:14.5px; font-weight:600; cursor:pointer; }
   .recorrido-form button:hover { background:var(--verde-medio); }
+  /* Recordarme en este dispositivo (opcional) y "Tus consultas" */
+  .recorrido-form .botones-fila { display:flex; gap:8px; }
+  .recorrido-form .botones-fila button { flex:1; }
+  .recorrido-form button.btn-secundario { background:var(--blanco); color:var(--verde-oscuro); border:1.5px solid #e2ded8; }
+  .recorrido-form button.btn-secundario:hover { background:#f6f4f0; }
+  .recorrido-form .check-fila { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--verde-oscuro); cursor:pointer; }
+  .recorrido-form .check-fila input { width:auto; margin:0; accent-color:var(--verde-principal); }
+  .historial { display:flex; flex-direction:column; gap:6px; text-align:left; }
+  .historial-item { display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; background:var(--blanco); border:1.5px solid #ece8e2; border-radius:12px; padding:10px 12px; cursor:pointer; font-family:'Quicksand',sans-serif; font-size:13.5px; color:var(--verde-oscuro); text-align:left; }
+  .historial-item:hover { border-color:var(--verde-principal); }
+  .historial-item .hi-texto { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .historial-item .hi-fecha { flex-shrink:0; font-size:12px; color:var(--gris); }
+  .link-suave { background:none; border:none; padding:2px; font-family:'Quicksand',sans-serif; font-size:12.5px; color:var(--gris); text-decoration:underline; cursor:pointer; align-self:center; }
+  .leyendo-banner { text-align:center; font-size:12.5px; color:var(--gris); padding:10px 16px 2px; }
+  .leyendo-acciones { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; padding:8px 16px 16px; }
+  .leyendo-acciones .suggestion-chip { cursor:pointer; }
   .progreso { display:none; position:sticky; top:55px; z-index:9; background:var(--crema); padding:10px 16px 8px; border-bottom:1px solid rgba(117,183,129,0.15); }
   .progreso.visible { display:block; }
   .progreso-inner { max-width:720px; margin:0 auto; }
@@ -201,6 +217,7 @@
       <span class="badge-dot"></span>
       En línea
     </div>
+    <button class="logout-btn" onclick="volverAlInicio()" title="Volver al inicio">Inicio</button>
     <button class="logout-btn" onclick="handleLogout()">Salir</button>
   </header>
 
@@ -319,6 +336,8 @@ function handleLogout() {
   conversationId = nuevoConversationId();
   recorridoActivo = null;
   mensajesPorPaso = {};
+  ofertaHecha = false;
+  leyendoConsulta = false;
   actualizarProgreso(null);
   // Restaurar mensaje de bienvenida
   document.getElementById('chat-body').innerHTML = '';
@@ -636,11 +655,13 @@ function renderWelcome() {
   const body = document.getElementById('chat-body');
   const guardado = leerRecorridoGuardado();
   const aMedias = guardado && !guardado.completo && guardado.paso > 0;
+  const persona = leerPersona();
+  const nombreSaludo = aMedias ? guardado.nombre : (persona ? persona.nombre : '');
 
   const welcome = document.createElement('div');
   welcome.className = 'welcome-msg';
   welcome.innerHTML =
-    '<h2 class="welcome-title">¡Hola' + (aMedias ? ', ' + escapeHtml(primerNombre(guardado.nombre)) : '') + '! ¿En qué te ayudo? 👋</h2>' +
+    '<h2 class="welcome-title">¡Hola' + (nombreSaludo ? ', ' + escapeHtml(primerNombre(nombreSaludo)) : '') + '! ¿En qué te ayudo? 👋</h2>' +
     '<p class="welcome-sub">Podés preguntarme sobre la plataforma, pacientes, facturación, beneficios y más.</p>' +
     '<div class="welcome-actions"></div>';
   const actions = welcome.querySelector('.welcome-actions');
@@ -669,6 +690,7 @@ function renderWelcome() {
     atajos.appendChild(b);
   });
   actions.appendChild(atajos);
+  if (persona) agregarHistorial(actions, persona);
   body.appendChild(welcome);
 }
 
@@ -688,7 +710,8 @@ function iniciarRecorrido() {
   if (welcome) welcome.remove();
   if (document.getElementById('recorrido-form')) return;
 
-  const guardado = leerRecorridoGuardado() || {};
+  const persona = leerPersona();
+  const guardado = leerRecorridoGuardado() || (persona ? { nombre: persona.nombre, mail: persona.mail } : {});
   const wrap = document.createElement('div');
   wrap.className = 'msg bot';
   wrap.innerHTML =
@@ -702,6 +725,7 @@ function iniciarRecorrido() {
         '<option value="UY"' + (guardado.pais === 'UY' ? ' selected' : '') + '>Uruguay</option>' +
         '<option value="AR"' + (guardado.pais === 'AR' ? ' selected' : '') + '>Argentina</option>' +
       '</select>' +
+      (persona ? '' : '<label class="check-fila"><input type="checkbox" id="rf-recordar" checked> Recordarme en este dispositivo</label>') +
       '<div class="form-error" id="rf-error"></div>' +
       '<button type="submit">Empezar recorrido 🌱</button>' +
       '<div class="form-nota">Usamos estos datos solo para acompañarte en tu ingreso.</div>' +
@@ -722,6 +746,8 @@ function iniciarRecorrido() {
     else if (!pais) msg = 'Elegí tu país.';
     if (msg) { err.textContent = msg; err.style.display = 'block'; return; }
 
+    const recordar = document.getElementById('rf-recordar');
+    if (recordar && recordar.checked) guardarJSON(PERSONA_KEY, { nombre, mail });
     wrap.remove();
     recorridoActivo = { nombre, mail, pais, paso: 0, completo: false };
     guardarRecorrido(recorridoActivo);
@@ -853,9 +879,182 @@ function procesarMarcasRecorrido(reply) {
   return recorridoActivo.paso > 0 ? ['Listo, siguiente paso 👉'] : [];
 }
 
+// ── RECORDARME EN ESTE DISPOSITIVO (opcional) ─────────────────
+// Después de la primera respuesta (fuera del recorrido) le ofrecemos a la
+// persona dejar nombre y mail para que el asistente la recuerde. Si acepta:
+//  - sus consultas se guardan en ESTE navegador (localStorage) y las ve al
+//    inicio, en "Tus consultas" (solo lectura: abrir una vieja no la manda de
+//    nuevo al modelo, así que no suma costo);
+//  - el backend anota nombre y mail en chat_personas, unido a la conversación.
+// Si dice "Ahora no", no volvemos a preguntar por DIAS_SIN_OFRECER días.
+const PERSONA_KEY = 'tt_persona_v1';
+const HISTORIAL_KEY = 'tt_historial_v1';
+const OFERTA_KEY = 'tt_recordar_oferta_v1';
+const MAX_CONSULTAS = 30;
+const CONSULTAS_VISIBLES = 4;
+const DIAS_SIN_OFRECER = 14;
+
+let ofertaHecha = false;       // ya ofrecimos en esta conversación
+let leyendoConsulta = false;   // se está mostrando una consulta vieja
+
+function leerJSON(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
+function guardarJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } }
+function leerPersona() { const p = leerJSON(PERSONA_KEY); return p && p.nombre && p.mail ? p : null; }
+function leerHistorial() { const h = leerJSON(HISTORIAL_KEY); return Array.isArray(h) ? h : []; }
+
+// Texto para guardar de un mensaje (las imágenes no se guardan).
+function textoGuardable(m) {
+  let t = typeof m.content === 'string' ? m.content
+    : ((m.content.find(b => b.type === 'text') || {}).text || '') + ' 📷';
+  return t.replace(/^\[Recorrido\]\s*/, '').trim();
+}
+
+function guardarConsultaActual() {
+  if (!leerPersona() || !conversationHistory.length) return;
+  const consulta = {
+    id: conversationId,
+    fecha: Date.now(),
+    mensajes: conversationHistory.map(m => ({ r: m.role === 'user' ? 'u' : 'b', t: textoGuardable(m) }))
+  };
+  let lista = [consulta, ...leerHistorial().filter(c => c.id !== conversationId)].slice(0, MAX_CONSULTAS);
+  // Si el navegador se queda sin lugar, soltamos las más viejas.
+  while (lista.length && !guardarJSON(HISTORIAL_KEY, lista)) lista = lista.slice(0, -1);
+}
+
+function ofrecerRecordar() {
+  if (ofertaHecha || recorridoActivo || leyendoConsulta || leerPersona()) return;
+  const ultima = Number(leerJSON(OFERTA_KEY)) || 0;
+  if (Date.now() - ultima < DIAS_SIN_OFRECER * 864e5) return;
+  ofertaHecha = true;
+
+  const body = document.getElementById('chat-body');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg bot';
+  wrap.innerHTML =
+    '<div class="msg-avatar">✦</div>' +
+    '<form class="recorrido-form" novalidate>' +
+      '<div>💾 <strong>¿Querés que te recuerde?</strong><br>Si dejás tu nombre y mail, vas a poder volver a ver tus consultas desde este dispositivo cuando quieras. Es opcional.</div>' +
+      '<input name="nombre" placeholder="Tu nombre" autocomplete="name">' +
+      '<input name="mail" type="email" placeholder="Tu mail" autocomplete="email">' +
+      '<div class="form-error"></div>' +
+      '<div class="botones-fila">' +
+        '<button type="submit">Recordarme</button>' +
+        '<button type="button" class="btn-secundario">Ahora no</button>' +
+      '</div>' +
+      '<div class="form-nota">Tus consultas quedan guardadas en este dispositivo, y el equipo de Tu Terapia va a saber que son tuyas para poder acompañarte mejor.</div>' +
+    '</form>';
+  body.appendChild(wrap);
+
+  const form = wrap.querySelector('form');
+  form.querySelector('.btn-secundario').onclick = () => {
+    guardarJSON(OFERTA_KEY, Date.now());
+    wrap.remove();
+  };
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    const nombre = form.nombre.value.trim();
+    const mail = form.mail.value.trim().toLowerCase();
+    const err = form.querySelector('.form-error');
+    let msg = '';
+    if (!nombre) msg = 'Contanos tu nombre.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) msg = 'Revisá el mail, parece que le falta algo.';
+    if (msg) { err.textContent = msg; err.style.display = 'block'; return; }
+    guardarJSON(PERSONA_KEY, { nombre, mail });
+    guardarConsultaActual();
+    wrap.remove();
+    appendMessage('bot', '¡Listo, ' + primerNombre(nombre) + '! 💚 Ya guardé esta consulta. Cuando vuelvas, la vas a encontrar al inicio, en **Tus consultas**.', null);
+  };
+}
+
+function fechaCorta(ms) {
+  const d = new Date(ms);
+  return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+// "Tus consultas" en la bienvenida.
+function agregarHistorial(actions, persona) {
+  const lista = leerHistorial();
+  if (lista.length) {
+    const label = document.createElement('div');
+    label.className = 'atajos-label';
+    label.textContent = 'Tus consultas';
+    actions.appendChild(label);
+
+    const cont = document.createElement('div');
+    cont.className = 'historial';
+    const dibujar = (todas) => {
+      cont.innerHTML = '';
+      (todas ? lista : lista.slice(0, CONSULTAS_VISIBLES)).forEach(c => {
+        const primera = (c.mensajes.find(m => m.r === 'u') || {}).t || 'Consulta';
+        const b = document.createElement('button');
+        b.className = 'historial-item';
+        b.innerHTML = '<span class="hi-texto">' + escapeHtml(primera) + '</span><span class="hi-fecha">' + fechaCorta(c.fecha) + '</span>';
+        b.onclick = () => verConsulta(c);
+        cont.appendChild(b);
+      });
+      if (!todas && lista.length > CONSULTAS_VISIBLES) {
+        const mas = document.createElement('button');
+        mas.className = 'link-suave';
+        mas.textContent = 'Ver todas (' + lista.length + ')';
+        mas.onclick = () => dibujar(true);
+        cont.appendChild(mas);
+      }
+    };
+    dibujar(false);
+    actions.appendChild(cont);
+  }
+
+  const olvidar = document.createElement('button');
+  olvidar.className = 'link-suave';
+  olvidar.textContent = '¿No sos ' + primerNombre(persona.nombre) + '? Olvidar mis datos en este dispositivo';
+  olvidar.onclick = () => {
+    if (!confirm('¿Borrar tu nombre, mail y consultas guardadas de este dispositivo?')) return;
+    try { [PERSONA_KEY, HISTORIAL_KEY, OFERTA_KEY].forEach(k => localStorage.removeItem(k)); } catch {}
+    volverAlInicio();
+  };
+  actions.appendChild(olvidar);
+}
+
+// Muestra una consulta guardada, solo para leer.
+function verConsulta(c) {
+  volverAlInicio(true);
+  leyendoConsulta = true;
+  const body = document.getElementById('chat-body');
+  const banner = document.createElement('div');
+  banner.className = 'leyendo-banner';
+  banner.textContent = '🗂️ Tu consulta del ' + fechaCorta(c.fecha) + ' · si escribís abajo, arrancás una consulta nueva';
+  body.appendChild(banner);
+  c.mensajes.forEach(m => appendMessage(m.r === 'u' ? 'user' : 'bot', m.t, null));
+  const acciones = document.createElement('div');
+  acciones.className = 'leyendo-acciones';
+  const volver = document.createElement('button');
+  volver.className = 'suggestion-chip';
+  volver.textContent = '← Volver al inicio';
+  volver.onclick = () => volverAlInicio();
+  acciones.appendChild(volver);
+  body.appendChild(acciones);
+  window.scrollTo({ top: 0 });
+}
+
+// Deja el chat como recién abierto (sin cerrar sesión). Con vacio=true no
+// dibuja la bienvenida (para mostrar otra cosa en su lugar).
+function volverAlInicio(vacio) {
+  conversationHistory = [];
+  conversationId = nuevoConversationId();
+  recorridoActivo = null;
+  mensajesPorPaso = {};
+  ofertaHecha = false;
+  leyendoConsulta = false;
+  actualizarProgreso(null);
+  const body = document.getElementById('chat-body');
+  body.innerHTML = '';
+  if (!vacio) { renderWelcome(); window.scrollTo({ top: 0 }); }
+}
+
 // ── ENVÍO DE MENSAJES ─────────────────────────────────────────
 // displayText: lo que se ve en la burbuja si es distinto de lo que se manda.
 function sendText(text, image, displayText) {
+  if (leyendoConsulta) volverAlInicio(true);
   // Los botones de respuestas anteriores ya no aplican: los sacamos.
   document.querySelectorAll('#chat-body .suggestions').forEach(el => {
     const fila = el.closest('.msg');
@@ -931,6 +1130,8 @@ async function processQuery(text, image) {
         onboarding: recorridoActivo
           ? { nombre: recorridoActivo.nombre, mail: recorridoActivo.mail, pais: recorridoActivo.pais }
           : undefined,
+        // Opcional: solo si eligió "recordarme". No va al modelo, solo al registro.
+        persona: leerPersona() || undefined,
         stream: true
       })
     });
@@ -959,6 +1160,8 @@ async function processQuery(text, image) {
     conversationHistory.push({ role: 'assistant', content: reply });
     const chips = procesarMarcasRecorrido(reply);
     agregarChips(chips);
+    guardarConsultaActual();
+    ofrecerRecordar();
     // Recordamos dónde quedó cada paso para los puntitos de la barra, y
     // redibujamos la barra ahora que el mensaje existe.
     if (ultimoPasoMostrado && recorridoActivo) {

@@ -170,6 +170,29 @@ where not completo
 order by ultima_actividad desc;
 ```
 
+### Recordarme en este dispositivo (opcional)
+
+**Cómo funciona:** después de la primera respuesta (fuera del recorrido) el chat
+ofrece "¿Querés que te recuerde?" con nombre y mail. Es opcional: "Ahora no" lo
+oculta por 14 días. Si acepta, el navegador guarda `tt_persona_v1` y sus
+consultas en `tt_historial_v1` (últimas 30, sin imágenes), que se ven al inicio
+en "Tus consultas". Abrir una consulta vieja es solo lectura: no se reenvía al
+modelo, así que no suma costo. "Olvidar mis datos" borra todo del dispositivo.
+El formulario del recorrido trae tildado "Recordarme en este dispositivo".
+
+**Qué se registra:** el frontend manda `persona: {nombre, mail}` y el backend
+lo guarda en `chat_personas` (vía `persona_registrar`, SECURITY DEFINER), una
+fila por conversación. No va al modelo ni toca `chat_conversaciones`.
+
+```sql
+-- Quién consulta y cuánto
+select * from chat_uso_por_persona order by ultima_consulta desc;
+
+-- Las consultas de una persona
+select hora, pregunta, respuesta from chat_consultas_con_persona
+where mail = 'alguien@mail.com' order by hora;
+```
+
 ### Monitorear el costo y el caché
 
 El system prompt son **18.440 tokens** (medido) que se reenvían en cada mensaje,
