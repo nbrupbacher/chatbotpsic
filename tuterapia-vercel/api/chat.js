@@ -174,6 +174,42 @@ async function registrarRecorrido({ conversacionId, onboarding, reply }) {
   }
 }
 
+// ── QUIÉN CONSULTA (opcional, Supabase) ────────────────────────
+// Si la persona eligió "recordarme en este dispositivo", el frontend manda
+// `persona: {nombre, mail}` en cada request y lo guardamos en chat_personas
+// (vía persona_registrar, SECURITY DEFINER), unido a la conversación por
+// conversacion_id. No va al modelo: no suma tokens. Si falla, el chat sigue.
+function limpiarPersona(p) {
+  if (!p || typeof p !== 'object') return null;
+  const nombre = typeof p.nombre === 'string' ? p.nombre.trim().slice(0, 120) : '';
+  const mail = typeof p.mail === 'string' ? p.mail.trim().toLowerCase().slice(0, 200) : '';
+  if (!nombre || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return null;
+  return { nombre, mail };
+}
+
+async function registrarPersona({ conversacionId, persona }) {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_KEY;
+  if (!url || !key || !conversacionId || !persona) return;
+
+  const headers = { 'Content-Type': 'application/json', apikey: key };
+  if (key.startsWith('eyJ')) headers.Authorization = `Bearer ${key}`;
+
+  const res = await fetch(`${url}/rest/v1/rpc/persona_registrar`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      p_conversacion_id: conversacionId,
+      p_nombre: persona.nombre,
+      p_mail: persona.mail
+    })
+  });
+
+  if (!res.ok) {
+    console.error('No se pudo registrar la persona:', await res.text());
+  }
+}
+
 export default async function handler(req, res) {
   // Solo aceptamos POST
   if (req.method !== 'POST') {
@@ -191,6 +227,7 @@ export default async function handler(req, res) {
   try {
     const { messages, conversationId } = req.body;
     const onboarding = limpiarOnboarding(req.body.onboarding);
+    const persona = limpiarPersona(req.body.persona);
 
     // Solo aceptamos un id con forma razonable: es lo único de este payload que
     // termina agrupando filas, y no queremos basura en la columna.
@@ -1288,6 +1325,14 @@ Si NO sabés con certeza la respuesta a algo, NO INVENTES. Decí algo como: "No 
         await registrarRecorrido({ conversacionId, onboarding, reply });
       } catch (err) {
         console.error('Fallo el registro del recorrido:', err);
+      }
+    }
+
+    if (persona) {
+      try {
+        await registrarPersona({ conversacionId, persona });
+      } catch (err) {
+        console.error('Fallo el registro de la persona:', err);
       }
     }
 
