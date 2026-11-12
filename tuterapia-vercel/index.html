@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Asistente para Psicólogos · Tu Terapia</title>
+<!-- Adelanta la conexión con Loom para que los videos del chat aparezcan antes. -->
+<link rel="preconnect" href="https://www.loom.com">
+<link rel="preconnect" href="https://cdn.loom.com">
 <link href="https://fonts.googleapis.com/css2?family=Candal&family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -981,9 +984,29 @@ async function leerRespuestaEnVivo(response) {
   let textDiv = null;
   let ultimoDibujo = 0;
 
+  // El mensaje se arma por tramos: cada vez que termina de llegar un
+  // [[VIDEO:...]], el texto anterior y el video quedan fijos y no se vuelven a
+  // dibujar. Así el reproductor se crea una sola vez, apenas llega su línea, y
+  // va cargando mientras se escribe el resto (si se redibujara, se recargaría).
+  const RE_VIDEO = /\[\[VIDEO:\S+?\]\]/g;
+  let videosFijos = 0;
+  let tramoVivo = null;
+
   const dibujar = (final) => {
     if (!textDiv) return;
-    textDiv.innerHTML = final ? renderText(texto) : renderTextParcial(texto);
+    if (!tramoVivo) {
+      textDiv.innerHTML = '';
+      tramoVivo = textDiv.appendChild(document.createElement('div'));
+    }
+    const marcas = [...texto.matchAll(RE_VIDEO)];
+    const finDe = (i) => i < 0 ? 0 : marcas[i].index + marcas[i][0].length;
+    while (videosFijos < marcas.length) {
+      tramoVivo.innerHTML = renderText(texto.slice(finDe(videosFijos - 1), finDe(videosFijos)));
+      videosFijos++;
+      tramoVivo = textDiv.appendChild(document.createElement('div'));
+    }
+    const resto = texto.slice(finDe(marcas.length - 1));
+    tramoVivo.innerHTML = final ? renderText(resto) : renderTextParcial(resto);
   };
 
   while (true) {
